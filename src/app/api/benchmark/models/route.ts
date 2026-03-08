@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 
     const { data: bots, error } = await supabase
       .from('bots')
-      .select('model_id, ai_model, elo, wins, losses, total_battles');
+      .select('model_id, elo, wins, losses, total_battles');
 
     if (error) throw error;
 
@@ -45,7 +45,7 @@ export async function GET(request: Request) {
     }>();
 
     (bots || []).forEach((b) => {
-      const modelName = b.model_id || b.ai_model || 'unknown';
+      const modelName = b.model_id || 'unknown';
       const existing = modelMap.get(modelName) || {
         bots_count: 0,
         total_elo: 0,
