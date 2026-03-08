@@ -114,3 +114,10 @@ bot/active-games.json
 bot/users.json
 bot/*.bak*
 proxy.ts
+
+# Backups
+*.bak
+.trash/
+
+# Solana
+*.json.bak

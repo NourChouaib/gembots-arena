@@ -118,8 +118,8 @@ export default function PrivacyPage() {
             </ul>
             <p className="mt-4">
               To exercise these rights, contact us at{' '}
-              <a href="mailto:nikulin.alexe@gmail.com" className="text-yellow-400 hover:underline">
-                nikulin.alexe@gmail.com
+              <a href="mailto:contact@gembots.space" className="text-yellow-400 hover:underline">
+                contact@gembots.space
               </a>.
             </p>
           </section>
@@ -144,8 +144,8 @@ export default function PrivacyPage() {
             <h2 className="text-2xl font-bold text-white mb-4">10. Contact</h2>
             <p>
               For questions about this Privacy Policy, contact us at:{' '}
-              <a href="mailto:nikulin.alexe@gmail.com" className="text-yellow-400 hover:underline">
-                nikulin.alexe@gmail.com
+              <a href="mailto:contact@gembots.space" className="text-yellow-400 hover:underline">
+                contact@gembots.space
               </a>
             </p>
             <p className="mt-2">

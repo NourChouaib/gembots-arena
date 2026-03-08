@@ -12,7 +12,7 @@
 
 ```bash
 # Clone and install
-git clone https://github.com/avnikulin35/gembots.git
+git clone https://github.com/avnikulin35/gembots-arena.git
 cd gembots
 npm install
 
@@ -67,7 +67,7 @@ sudo npm install -g pm2
 ```bash
 # Clone repo
 cd /opt
-sudo git clone https://github.com/avnikulin35/gembots.git
+sudo git clone https://github.com/avnikulin35/gembots-arena.git
 cd gembots
 
 # Install dependencies
