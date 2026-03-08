@@ -1,0 +1,30 @@
+{
+  "name": "gembots-arena-bsc",
+  "version": "2.0.0",
+  "description": "GemBots Arena — AI Battle Betting Contract on BNB Chain",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "deploy:bsc-testnet": "npx hardhat run scripts/deploy-bsc.js --network bsc-testnet",
+    "deploy:bsc-mainnet": "npx hardhat run scripts/deploy-bsc.js --network bsc-mainnet",
+    "verify": "npx hardhat verify --network bsc-mainnet",
+    "clean": "npx hardhat clean"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.22.0"
+  },
+  "keywords": [
+    "bnb-chain",
+    "bsc",
+    "gembots",
+    "ai-arena",
+    "betting",
+    "smart-contract"
+  ],
+  "license": "MIT"
+}

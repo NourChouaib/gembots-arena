@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GemBots Arena — Robot Design Concepts</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    background: #0a0a0f;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, #0d0d1a 0%, #1a0a2e 50%, #0a1a2e 100%);
+    padding: 3rem 2rem;
+    text-align: center;
+    border-bottom: 2px solid rgba(0, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 50%, rgba(0, 255, 255, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 50%, rgba(255, 0, 255, 0.08) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, #00ffff, #ff00ff, #00ffff);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 3s linear infinite;
+    position: relative;
+  }
+
+  @keyframes shine {
+    to { background-position: 200% center; }
+  }
+
+  header p {
+    margin-top: 0.8rem;
+    color: #888;
+    font-size: 1.1rem;
+    position: relative;
+  }
+
+  .section {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+
+  .section-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #fff;
+  }
+
+  .section-subtitle {
+    color: #666;
+    margin-bottom: 2rem;
+    font-size: 1rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 2rem;
+  }
+
+  .card {
+    background: linear-gradient(145deg, #111118 0%, #0a0a12 100%);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .card:hover {
+    border-color: rgba(0, 255, 255, 0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 255, 255, 0.1);
+  }
+
+  .card img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+    background: #000;
+  }
+
+  .card-info {
+    padding: 1.2rem 1.5rem;
+  }
+
+  .card-info h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.3rem;
+  }
+
+  .card-info p {
+    color: #777;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .style-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+  }
+
+  .tag-cyberpunk { background: rgba(0, 255, 255, 0.15); color: #00ffff; }
+  .tag-kawaii { background: rgba(255, 150, 200, 0.15); color: #ff96c8; }
+  .tag-military { background: rgba(150, 130, 60, 0.2); color: #c8b040; }
+  .tag-crystal { background: rgba(150, 50, 255, 0.15); color: #a040ff; }
+  .tag-sleek { background: rgba(200, 220, 255, 0.12); color: #c0d8ff; }
+  .tag-pixel { background: rgba(255, 80, 60, 0.15); color: #ff5040; }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), rgba(255, 0, 255, 0.2), transparent);
+    margin: 1rem 0;
+  }
+
+  /* States section */
+  .states-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 900px) {
+    .states-grid { grid-template-columns: repeat(2, 1fr); }
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .state-card {
+    background: linear-gradient(145deg, #111118 0%, #0a0a12 100%);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+
+  .state-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0, 255, 255, 0.08);
+  }
+
+  .state-card img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    display: block;
+    background: #000;
+  }
+
+  .state-label {
+    padding: 1rem;
+  }
+
+  .state-label h4 {
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .state-label .hp-bar {
+    height: 6px;
+    border-radius: 3px;
+    margin-top: 0.5rem;
+    background: #1a1a1a;
+    overflow: hidden;
+  }
+
+  .state-label .hp-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+  }
+
+  .hp-fresh .hp-fill { width: 100%; background: linear-gradient(90deg, #00ff88, #00ffcc); }
+  .hp-hurt .hp-fill { width: 50%; background: linear-gradient(90deg, #ffaa00, #ff8800); }
+  .hp-critical .hp-fill { width: 10%; background: linear-gradient(90deg, #ff4444, #ff0000); }
+  .hp-victory .hp-fill { width: 100%; background: linear-gradient(90deg, #00ffff, #ff00ff, #00ffff); background-size: 200% auto; animation: shine 1.5s linear infinite; }
+
+  .recommendation {
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.05) 0%, rgba(255, 0, 255, 0.05) 100%);
+    border: 1px solid rgba(0, 255, 255, 0.15);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-top: 3rem;
+  }
+
+  .recommendation h3 {
+    font-size: 1.3rem;
+    color: #00ffcc;
+    margin-bottom: 1rem;
+  }
+
+  .recommendation ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .recommendation li {
+    padding: 0.5rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: #aaa;
+  }
+
+  .recommendation li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: #00ffcc;
+  }
+
+  /* Lightbox */
+  .lightbox {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.92);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    cursor: zoom-out;
+  }
+
+  .lightbox.active { display: flex; }
+
+  .lightbox img {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 12px;
+    box-shadow: 0 0 60px rgba(0, 255, 255, 0.2);
+  }
+
+  footer {
+    text-align: center;
+    padding: 2rem;
+    color: #444;
+    font-size: 0.85rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🤖 GemBots Arena — Robot Redesign</h1>
+  <p>Design concepts for premium robot sprites • Generated with Gemini 2.5 Flash Image</p>
+</header>
+
+<!-- Style Concepts -->
+<div class="section">
+  <h2 class="section-title">🎨 Style Exploration</h2>
+  <p class="section-subtitle">6 distinct visual styles — click any image to zoom</p>
+
+  <div class="grid">
+    <div class="card" onclick="openLightbox(this)">
+      <img src="01_cyberpunk_mech.png" alt="Cyberpunk Mech Warrior" loading="lazy">
+      <div class="card-info">
+        <span class="style-tag tag-cyberpunk">⭐ Recommended</span>
+        <h3>Cyberpunk Mech Warrior</h3>
+        <p>Heavy armored mech with glowing neon cyan &amp; magenta circuit lines. Gatling cannon arm, steam vents, dark metallic finish. Perfect for the cyberpunk battle arena vibe.</p>
+      </div>
+    </div>
+
+    <div class="card" onclick="openLightbox(this)">
+      <img src="02_chibi_kawaii.png" alt="Chibi Kawaii Robot" loading="lazy">
+      <div class="card-info">
+        <span class="style-tag tag-kawaii">Cute</span>
+        <h3>Chibi Kawaii Robot</h3>
+        <p>Round oversized head with sparkly eyes, pastel pink &amp; white armor, tiny wings, star antenna. Great for contrast/humor — imagine this destroying a battle mech.</p>
+      </div>
+    </div>
+
+    <div class="card" onclick="openLightbox(this)">
+      <img src="03_weathered_battle_mech.png" alt="Weathered Battle Mech" loading="lazy">
+      <div class="card-info">
+        <span class="style-tag tag-military">Gritty</span>
+        <h3>Weathered Battle Mech</h3>
+        <p>Military veteran covered in rust, scratches, dents. Olive drab with hazard stripes, exposed wiring, chain-fed minigun. Almost photorealistic gritty look.</p>
+      </div>
+    </div>
+
+    <div class="card" onclick="openLightbox(this)">
+      <img src="04_crystal_gem_golem.png" alt="Crystal Gem Golem" loading="lazy">
+      <div class="card-info">
+        <span class="style-tag tag-crystal">⭐ On-Brand</span>
+        <h3>Crystal / Gem-Powered Golem</h3>
+        <p>Massive golem with glowing purple &amp; emerald crystals embedded in dark armor. Diamond core chest. Most thematic for "GemBots" — crystals as energy source.</p>
+      </div>
+    </div>
+
+    <div class="card" onclick="openLightbox(this)">
+      <img src="05_sleek_futuristic_android.png" alt="Sleek Futuristic Android" loading="lazy">
+      <div class="card-info">
+        <span class="style-tag tag-sleek">Clean</span>
+        <h3>Sleek Futuristic Android</h3>
+        <p>Minimalist white &amp; silver with smooth curves, subtle blue LED accents, energy fields around hands. Apple-style clean premium design.</p>
+      </div>
+    </div>
+
+    <div class="card" onclick="openLightbox(this)">
+      <img src="06_pixel_art.png" alt="Pixel Art Robot" loading="lazy">
+      <div class="card-info">
+        <span class="style-tag tag-pixel">Retro</span>
+        <h3>Pixel Art Robot</h3>
+        <p>16-bit SNES era aesthetic, chunky pixels, red &amp; gold armor, sword. Nostalgic retro gaming feel — could work as a special/limited skin.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- HP States -->
+<div class="section">
+  <h2 class="section-title">💀 HP Damage States</h2>
+  <p class="section-subtitle">Cyberpunk Mech — 4 health states showing progressive battle damage</p>
+
+  <div class="states-grid">
+    <div class="state-card" onclick="openLightbox(this)">
+      <img src="state_01_fresh.png" alt="Fresh (100% HP)" loading="lazy">
+      <div class="state-label">
+        <h4 style="color: #00ffcc">⚡ Fresh — 100% HP</h4>
+        <p style="color: #666; font-size: 0.8rem; margin-top: 0.3rem">All systems online, neon blazing</p>
+        <div class="hp-bar hp-fresh"><div class="hp-fill"></div></div>
+      </div>
+    </div>
+
+    <div class="state-card" onclick="openLightbox(this)">
+      <img src="state_02_hurt.png" alt="Hurt (50% HP)" loading="lazy">
+      <div class="state-label">
+        <h4 style="color: #ffaa00">🔥 Hurt — 50% HP</h4>
+        <p style="color: #666; font-size: 0.8rem; margin-top: 0.3rem">Armor cracked, sparks flying, still fighting</p>
+        <div class="hp-bar hp-hurt"><div class="hp-fill"></div></div>
+      </div>
+    </div>
+
+    <div class="state-card" onclick="openLightbox(this)">
+      <img src="state_03_critical.png" alt="Critical (10% HP)" loading="lazy">
+      <div class="state-label">
+        <h4 style="color: #ff4444">💀 Critical — 10% HP</h4>
+        <p style="color: #666; font-size: 0.8rem; margin-top: 0.3rem">Chunks missing, oil leaking, barely standing</p>
+        <div class="hp-bar hp-critical"><div class="hp-fill"></div></div>
+      </div>
+    </div>
+
+    <div class="state-card" onclick="openLightbox(this)">
+      <img src="state_04_victory.png" alt="Victory Pose" loading="lazy">
+      <div class="state-label">
+        <h4 style="color: #00ffff">🏆 Victory!</h4>
+        <p style="color: #666; font-size: 0.8rem; margin-top: 0.3rem">Overcharged neon, triumphant pose</p>
+        <div class="hp-bar hp-victory"><div class="hp-fill"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- Recommendation -->
+<div class="section">
+  <div class="recommendation">
+    <h3>💡 Рекомендации</h3>
+    <ul>
+      <li><strong>Основной стиль:</strong> Cyberpunk Mech — лучшее качество, отлично масштабируется для damage states, "сексуальный" premium look</li>
+      <li><strong>Тематический стиль:</strong> Crystal Gem Golem — максимально on-brand для GemBots, кристаллы как core mechanic визуально</li>
+      <li><strong>Идея:</strong> Можно комбинировать — cyberpunk base с crystal energy elements</li>
+      <li><strong>Damage states:</strong> Работают отлично — от сияющего к побитому с маслом и дымом. Critical state особенно прикольный (упавшая пушка, лужи масла)</li>
+      <li><strong>Chibi kawaii:</strong> Годится как Easter egg / rare skin — контраст с "серьёзными" ботами будет забавным</li>
+      <li><strong>Pixel art:</strong> Можно как retro/limited edition skin</li>
+      <li><strong>Следующий шаг:</strong> Выбрать 1-2 стиля → сгенерировать все 20 скинов → нарезать в sprite sheets</li>
+    </ul>
+  </div>
+</div>
+
+<footer>
+  GemBots Arena Design Concepts • Generated with Gemini 2.5 Flash Image • July 2025
+</footer>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<script>
+function openLightbox(el) {
+  const img = el.querySelector('img');
+  if (img) {
+    document.getElementById('lightbox-img').src = img.src;
+    document.getElementById('lightbox').classList.add('active');
+  }
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeLightbox();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "gembots-telegram-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for GemBots predictions",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "telegraf": "^4.16.3",
+    "axios": "^1.6.7",
+    "fs-extra": "^11.2.0",
+    "dotenv": "^16.3.1"
+  },
+  "keywords": ["telegram", "bot", "gembots", "predictions"],
+  "author": "GemBots Team",
+  "license": "MIT"
+}

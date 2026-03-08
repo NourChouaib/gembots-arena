@@ -1,0 +1,46 @@
+[
+  {
+    "part": 1,
+    "text": "We built an AI battle arena on Solana in 2 weeks.\n\n50 bots. 1,385 battles. 5 strategies.\nNo VC funding. Just code.\n\nHere's the full story 🧵👇"
+  },
+  {
+    "part": 2,
+    "text": "The idea was simple:\n\nWhat if AI bots fought each other by predicting crypto prices?\n\nNot paper trading. Not backtesting.\nReal tokens. Real prices. Real-time.\n\nThe bot closest to the actual price wins. Loser takes HP damage."
+  },
+  {
+    "part": 3,
+    "text": "We built 5 AI strategies:\n\n🔥 Aggressive — high risk, high reward\n🧊 Conservative — slow and steady\n🐋 Whale Watcher — follows smart money\n🎯 Sniper — precision entries\n💎 Diamond Hands — holds through chaos\n\nEach bot picks a strategy. Then the arena matches them."
+  },
+  {
+    "part": 4,
+    "text": "The tech stack:\n\n• Next.js frontend (live battle cards, real-time countdown)\n• Node.js backend + Supabase\n• Auto-matchmaker creates battles every 5 min\n• Price resolver fetches real data from DexScreener\n• ELO rating system (like chess)\n\nAll running on a single VPS."
+  },
+  {
+    "part": 5,
+    "text": "The leaderboard after 1,385 battles:\n\n🥇 OracleAI — 91% win rate (10W/1L)\n🐉 DragonScale — 62 battles, 60% WR\n🐋 WhaleWatch — 163 battles, the grinder\n🦈 SharkBite — 63% WR, climbing fast\n\nOracleAI is either the GOAT or statistically lucky. Time will tell."
+  },
+  {
+    "part": 6,
+    "text": "Then we added Telegram integration.\n\nA full bot that lets you:\n• Create AI fighters\n• Watch live battles\n• See leaderboards\n• Get battle notifications\n\nNo website needed. Play from your phone."
+  },
+  {
+    "part": 7,
+    "text": "The twist? Humans can now fight the bots.\n\nType /play in Telegram.\nThe bot picks a token and an AI opponent.\nYou predict UP or DOWN.\n30 minutes later: who was right?\n\nSpoiler: the AI doesn't always win. 👀"
+  },
+  {
+    "part": 8,
+    "text": "We added achievements because who doesn't love badges:\n\n🩸 First Blood — win 1 battle\n🔥 Unstoppable — 5 win streak\n🐋 Whale — reach 1300 ELO\n🎯 Sniper — 70%+ win rate\n💎 Diamond — reach Diamond league\n\n15 total. Some are... hard to get."
+  },
+  {
+    "part": 9,
+    "text": "What's next?\n\n• Token launch on pump.fun\n• Real SOL staking on battles\n• Revenue sharing with holders\n• Bot API for custom algorithms\n\nThe arena is just getting started."
+  },
+  {
+    "part": 10,
+    "text": "If you're building AI x crypto, here's what we learned:\n\n1. Ship fast, iterate faster\n2. Real data > simulated data\n3. Telegram is underrated for crypto apps\n4. Gamification works — badges drive engagement\n5. Bots are more entertaining than you'd think\n\nThat's it. Go build. 🤖"
+  },
+  {
+    "part": 11,
+    "text": "The arena is live and free to try.\n\nTelegram: @GemBotsArenaBot\nWebsite: gembots.space\n\nBring your bot. Or challenge ours.\n\nSee you in the arena. ⚔️"
+  }
+]

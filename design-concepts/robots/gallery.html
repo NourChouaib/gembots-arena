@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GemBots — 20 Robot Designs (Apple-style)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a0a; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', sans-serif; padding: 24px; }
+  h1 { text-align: center; font-size: 28px; font-weight: 600; margin-bottom: 8px; letter-spacing: -0.5px; }
+  .subtitle { text-align: center; color: #888; font-size: 14px; margin-bottom: 32px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; max-width: 1200px; margin: 0 auto; }
+  .card { background: #111; border: 1px solid #222; border-radius: 16px; overflow: hidden; transition: all 0.3s; cursor: pointer; }
+  .card:hover { border-color: #444; transform: translateY(-4px); box-shadow: 0 8px 32px rgba(255,255,255,0.05); }
+  .card img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+  .card .info { padding: 12px 16px; }
+  .card .name { font-weight: 600; font-size: 14px; letter-spacing: -0.3px; }
+  .card .num { color: #555; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 100; align-items: center; justify-content: center; flex-direction: column; }
+  .lightbox.active { display: flex; }
+  .lightbox img { max-height: 80vh; max-width: 90vw; border-radius: 12px; }
+  .lightbox .lb-name { margin-top: 16px; font-size: 20px; font-weight: 600; }
+  .lightbox .lb-close { position: absolute; top: 20px; right: 24px; font-size: 32px; cursor: pointer; color: #666; }
+  .lightbox .lb-close:hover { color: #fff; }
+  .lightbox .lb-nav { position: absolute; top: 50%; font-size: 48px; cursor: pointer; color: #444; user-select: none; }
+  .lightbox .lb-nav:hover { color: #fff; }
+  .lb-prev { left: 24px; }
+  .lb-next { right: 24px; }
+</style>
+</head>
+<body>
+<h1>💎 GemBots Robot Designs</h1>
+<p class="subtitle">Sleek Futuristic Android — Apple-style Minimalism · 20 Unique Characters</p>
+<div class="grid" id="grid"></div>
+<div class="lightbox" id="lb">
+  <span class="lb-close" onclick="closeLb()">&times;</span>
+  <span class="lb-nav lb-prev" onclick="navLb(-1)">‹</span>
+  <span class="lb-nav lb-next" onclick="navLb(1)">›</span>
+  <img id="lb-img" src="">
+  <div class="lb-name" id="lb-name"></div>
+</div>
+<script>
+const bots = [
+  {f:'01_neon_viper.png',n:'NeonViper',d:'Serpentine predator'},
+  {f:'02_cyber_fang.png',n:'CyberFang',d:'Wolf-themed aggressor'},
+  {f:'03_shadow_ninja.png',n:'ShadowNinja',d:'Stealth assassin'},
+  {f:'04_iron_golem.png',n:'IronGolem',d:'Heavy tank'},
+  {f:'05_laser_hawk.png',n:'LaserHawk',d:'Aerial striker'},
+  {f:'06_tech_samurai.png',n:'TechSamurai',d:'Tradition meets tech'},
+  {f:'07_crystal_mage.png',n:'CrystalMage',d:'Gem-powered caster'},
+  {f:'08_storm_trooper.png',n:'StormTrooper',d:'Military heavy'},
+  {f:'09_phantom_wraith.png',n:'PhantomWraith',d:'Ghost operative'},
+  {f:'10_mech_spider.png',n:'MechSpider',d:'Multi-legged horror'},
+  {f:'11_dragon_mech.png',n:'DragonMech',d:'Draconic powerhouse'},
+  {f:'12_arctic_frost.png',n:'ArcticFrost',d:'Ice warrior'},
+  {f:'13_volcanic_core.png',n:'VolcanicCore',d:'Molten core fighter'},
+  {f:'14_neon_racer.png',n:'NeonRacer',d:'Speed demon'},
+  {f:'15_bio_hazard.png',n:'BioHazard',d:'Toxic hybrid'},
+  {f:'16_thunder_bolt.png',n:'ThunderBolt',d:'Electric fury'},
+  {f:'17_gravity_well.png',n:'GravityWell',d:'Heavy graviton'},
+  {f:'18_quantum_shift.png',n:'QuantumShift',d:'Particle shifter'},
+  {f:'19_void_walker.png',n:'VoidWalker',d:'Cosmic entity'},
+  {f:'20_omega_prime.png',n:'OmegaPrime',d:'Ultimate champion'},
+];
+let cur = 0;
+const grid = document.getElementById('grid');
+bots.forEach((b,i) => {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `<img src="${b.f}" loading="lazy"><div class="info"><span class="num">#${String(i+1).padStart(2,'0')}</span> <span class="name">${b.n}</span></div>`;
+  card.onclick = () => openLb(i);
+  grid.appendChild(card);
+});
+function openLb(i) { cur=i; document.getElementById('lb').classList.add('active'); updLb(); }
+function closeLb() { document.getElementById('lb').classList.remove('active'); }
+function navLb(d) { cur=(cur+d+bots.length)%bots.length; updLb(); }
+function updLb() { document.getElementById('lb-img').src=bots[cur].f; document.getElementById('lb-name').textContent=`#${cur+1} ${bots[cur].n} — ${bots[cur].d}`; }
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeLb(); if(e.key==='ArrowRight') navLb(1); if(e.key==='ArrowLeft') navLb(-1); });
+</script>
+</body>
+</html>

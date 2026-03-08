@@ -1,0 +1,114 @@
+[
+  {
+    "id": "gpt4o",
+    "name": "GPT-4o",
+    "emoji": "🧠",
+    "agentId": "6502",
+    "txHash": "0xcd3c66e8e3c6603bfd6017cd29ee3c685b92860dd05ab0bb171b032c2165bc15",
+    "success": true
+  },
+  {
+    "id": "claude-sonnet",
+    "name": "Claude 3.5 Sonnet",
+    "emoji": "🎭",
+    "agentId": "6503",
+    "txHash": "0x0611337a0177a72e523259415d7367619e48843d72b2284c3b51d81823581dfc",
+    "success": true
+  },
+  {
+    "id": "claude-haiku",
+    "name": "Claude 3.5 Haiku",
+    "emoji": "✨",
+    "agentId": "6504",
+    "txHash": "0x58737a602319b8f794b598653ffb760b0d81664bad212453f2f5021621cd1f02",
+    "success": true
+  },
+  {
+    "id": "gemini-flash",
+    "name": "Gemini 2.0 Flash",
+    "emoji": "⚡",
+    "agentId": "6505",
+    "txHash": "0x4bdab09604044b544f3086618309d1d128ba27371f77b45c91f514f6a742cb14",
+    "success": true
+  },
+  {
+    "id": "gemini-pro",
+    "name": "Gemini 1.5 Pro",
+    "emoji": "💎",
+    "agentId": "6506",
+    "txHash": "0x871421f980ad6da651631f494763eb452a3c5c23343cf6eb07295414fa2d9d47",
+    "success": true
+  },
+  {
+    "id": "grok",
+    "name": "Grok",
+    "emoji": "🦊",
+    "agentId": "6507",
+    "txHash": "0xd141eaf22ea6580fbdc8237d34576caccf4e3d3241eff7cd9ffb7fb7daecff42",
+    "success": true
+  },
+  {
+    "id": "deepseek-r1",
+    "name": "DeepSeek R1",
+    "emoji": "🔬",
+    "agentId": "6508",
+    "txHash": "0x8ec1439af2b77853066efe89c1a3e17d8b2721858b1524d3c9ed6e859a5317fd",
+    "success": true
+  },
+  {
+    "id": "llama-70b",
+    "name": "Llama 3.3 70B",
+    "emoji": "🦙",
+    "agentId": "6509",
+    "txHash": "0x1500bb3c264e6485d8191c01b48ce053ac8d2f43e55abb456c9673c15ba79920",
+    "success": true
+  },
+  {
+    "id": "mistral-large",
+    "name": "Mistral Large",
+    "emoji": "🌬️",
+    "agentId": "6510",
+    "txHash": "0x13d8c1a3655886b13e2cf5bc6518dcb7a9f967e901810f1f6f31f866cd323a9b",
+    "success": true
+  },
+  {
+    "id": "qwen-72b",
+    "name": "Qwen 2.5 72B",
+    "emoji": "🐉",
+    "agentId": "6511",
+    "txHash": "0xe74b94688c0926cae7d644dd574b43dda4d14c684b3189840771cc0a2824a4a6",
+    "success": true
+  },
+  {
+    "id": "command-r-plus",
+    "name": "Command R+",
+    "emoji": "⚔️",
+    "agentId": "6512",
+    "txHash": "0xc52d6600fa6752cf48a259e91a0c2f108fa90fcf420bc99bf177669bfa096b15",
+    "success": true
+  },
+  {
+    "id": "phi-4",
+    "name": "Phi-4",
+    "emoji": "🔷",
+    "agentId": "6513",
+    "txHash": "0xc3594694e29e6ae4a6df44884026ed74458fa4d02d8731dcabfbf5e53787e9d3",
+    "success": true
+  },
+  {
+    "id": "nova-pro",
+    "name": "Nova Pro",
+    "emoji": "🌟",
+    "agentId": "6514",
+    "txHash": "0x2973f1b3dd27397cf3f91acbd61cb1f49cc2c3f79d90ea928fa067085492d88f",
+    "success": true
+  },
+  {
+    "id": "nemotron",
+    "name": "Nemotron 70B",
+    "emoji": "🟢",
+    "agentId": "6515",
+    "txHash": "0x2155ff6be2ce883503a41f30fba2358ed6c710b64dff175b372c73a325dbe704",
+    "success": true
+  }
+]

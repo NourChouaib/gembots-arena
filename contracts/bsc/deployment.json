@@ -1,0 +1,39 @@
+{
+  "contractName": "GemBotsNFAv5",
+  "address": "0x9bC5f392cE8C7aA13BD5bC7D5A1A12A4DD58b3D5",
+  "deployer": "0x133C89BC9Dc375fBc46493A92f4Fd2486F8F0d76",
+  "network": "bsc",
+  "chainId": 56,
+  "timestamp": "2026-03-06T08:50:00.000Z",
+  "mintFee": "tier-based: Bronze 0.01, Silver 0.03, Gold 0.1 BNB",
+  "genesisMax": 100,
+  "version": "v5",
+  "previousContract": {
+    "v1": "0x2F912A2B05a43CAE416536009d9b01Be0a3Ee0F9",
+    "note": "Original GemBotsNFA (deprecated)"
+  },
+  "bettingContract": "0x780D0DE71D361fDeA9C9c84fB2bc59C0fbc4016c",
+  "functions": {
+    "mint": "mint(string uri, string strategy) payable \u2192 uint256",
+    "mintGenesis": "mintGenesis(address to, string uri, string strategy) \u2192 uint256 (owner only)",
+    "batchMintGenesis": "batchMintGenesis(address to, string[] uris, string[] strategies) \u2192 uint256[] (owner only)"
+  },
+  "battleRecorder": {
+    "address": "0x4BaA0bCCD27D68a9A752c0a603b3C0b6E870b3F0",
+    "deployedAt": "2026-02-23T14:01:49.768Z",
+    "nfaContract": "0x6BCCB7E2C006f2303Ba53B1f003aEba7a27d8ef9",
+    "resolver": "0x133C89BC9Dc375fBc46493A92f4Fd2486F8F0d76",
+    "features": [
+      "recordBattle",
+      "batchRecordBattles",
+      "ELO",
+      "getBattleHistory"
+    ]
+  },
+  "previousVersions": [
+    {
+      "version": "v3",
+      "address": "0xD64D4597E8Cd1738B69A8706C3dE4eDe6db10674"
+    }
+  ]
+}

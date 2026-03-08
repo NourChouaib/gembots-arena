@@ -1,0 +1,419 @@
+'use client';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import TournamentHeader from '@/components/tournament/TournamentHeader';
+import TournamentBracketPanel, { type BracketMatch } from '@/components/tournament/TournamentBracketPanel';
+import LiveFightView, { type FightBotState } from '@/components/tournament/LiveFightView';
+import BettingPanel from '@/components/tournament/BettingPanel';
+import TradeTicker, { type TickerTrade } from '@/components/tournament/TradeTicker';
+
+// ─── TYPES ────────────────────────────────────────────────────────────────────
+
+interface TournamentData {
+  id: string;
+  name: string;
+  status: 'active' | 'finished' | 'waiting';
+  currentRound: number;
+  totalRounds: number;
+  rounds: Record<string, BracketMatch[]>;
+  participants: { id: number; name: string; elo: number; seed: number }[];
+  currentMatch: {
+    bot1: { id: number; name: string; hp: number; maxHp: number; elo?: number };
+    bot2: { id: number; name: string; hp: number; maxHp: number; elo?: number };
+    trades: TickerTrade[];
+    timeLeft: number;
+    status: 'waiting' | 'fighting' | 'finished';
+    winnerName?: string;
+    matchIndex: number;
+    totalMatches: number;
+  } | null;
+  nextMatchIn?: number;
+  totalPool: number;
+}
+
+// ─── MOCK DATA ────────────────────────────────────────────────────────────────
+
+const TOKENS = ['BONK', 'WIF', 'PEPE', 'DOGE', 'JUP', 'PYTH', 'ORCA', 'RAY'];
+
+function randomBetween(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+let mockTradeId = 0;
+
+function generateMockTrade(bot1Name: string, bot2Name: string): TickerTrade {
+  const isBot1 = Math.random() > 0.5;
+  const token = TOKENS[Math.floor(Math.random() * TOKENS.length)];
+  const action: 'buy' | 'sell' = Math.random() > 0.5 ? 'buy' : 'sell';
+  const pnl = Math.random() > 0.35 ? randomBetween(1, 40) : randomBetween(-20, -1);
+  return {
+    id: ++mockTradeId,
+    botName: isBot1 ? bot1Name : bot2Name,
+    token,
+    action,
+    pnl,
+    isCombo: pnl > 20 && Math.random() > 0.5,
+    timestamp: Date.now(),
+  };
+}
+
+function createMockTournament(): TournamentData {
+  return {
+    id: 'mock-weekly-7',
+    name: 'Weekly Tournament #7',
+    status: 'active',
+    currentRound: 1,
+    totalRounds: 3,
+    rounds: {
+      '1': [
+        { matchOrder: 1, bot1Name: 'AlphaBot', bot2Name: 'GemHunter', bot1Id: 1, bot2Id: 2, winnerId: 1, status: 'finished' },
+        { matchOrder: 2, bot1Name: 'MoonShot', bot2Name: 'DiamondAI', bot1Id: 3, bot2Id: 4, winnerId: 3, status: 'finished' },
+        { matchOrder: 3, bot1Name: 'NeonViper', bot2Name: 'CyberFang', bot1Id: 5, bot2Id: 6, winnerId: null, status: 'active' },
+        { matchOrder: 4, bot1Name: 'SolSniper', bot2Name: 'TokenKing', bot1Id: 7, bot2Id: 8, winnerId: null, status: 'pending' },
+      ],
+      '2': [
+        { matchOrder: 1, bot1Name: 'AlphaBot', bot2Name: 'MoonShot', bot1Id: 1, bot2Id: 3, winnerId: null, status: 'pending' },
+        { matchOrder: 2, bot1Name: 'TBD', bot2Name: 'TBD', bot1Id: 0, bot2Id: 0, winnerId: null, status: 'pending' },
+      ],
+      '3': [
+        { matchOrder: 1, bot1Name: 'TBD', bot2Name: 'TBD', bot1Id: 0, bot2Id: 0, winnerId: null, status: 'pending' },
+      ],
+    },
+    participants: [
+      { id: 1, name: 'AlphaBot', elo: 1450, seed: 1 },
+      { id: 2, name: 'GemHunter', elo: 1320, seed: 8 },
+      { id: 3, name: 'MoonShot', elo: 1410, seed: 2 },
+      { id: 4, name: 'DiamondAI', elo: 1380, seed: 7 },
+      { id: 5, name: 'NeonViper', elo: 1390, seed: 3 },
+      { id: 6, name: 'CyberFang', elo: 1350, seed: 6 },
+      { id: 7, name: 'SolSniper', elo: 1400, seed: 4 },
+      { id: 8, name: 'TokenKing', elo: 1360, seed: 5 },
+    ],
+    currentMatch: {
+      bot1: { id: 5, name: 'NeonViper', hp: 1000, maxHp: 1000, elo: 1390 },
+      bot2: { id: 6, name: 'CyberFang', hp: 1000, maxHp: 1000, elo: 1350 },
+      trades: [],
+      timeLeft: 240,
+      status: 'fighting',
+      matchIndex: 3,
+      totalMatches: 4,
+    },
+    totalPool: 42.5,
+  };
+}
+
+// ─── HOOKS ────────────────────────────────────────────────────────────────────
+
+function useTournamentData() {
+  const [tournament, setTournament] = useState<TournamentData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const mockRef = useRef<TournamentData | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const tradeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Try to fetch from API, fallback to mock
+  const fetchTournament = useCallback(async () => {
+    try {
+      const res = await fetch('/api/tournament');
+      if (!res.ok) throw new Error('API error');
+      const data = await res.json();
+      if (data.tournament && data.tournament.currentMatch) {
+        setTournament(data.tournament);
+        setError(false);
+        return;
+      }
+    } catch {
+      // API not available or no current match, use mock
+    }
+
+    // Fallback: use mock with local simulation
+    if (!mockRef.current) {
+      mockRef.current = createMockTournament();
+    }
+    setTournament({ ...mockRef.current });
+    setError(false);
+  }, []);
+
+  // Simulate fight in mock mode
+  useEffect(() => {
+    if (!tournament || !tournament.currentMatch || tournament.currentMatch.status !== 'fighting') return;
+
+    // Check if we're in mock mode (mock id prefix)
+    const isMock = tournament.id.startsWith('mock-');
+    if (!isMock) return;
+
+    // Timer countdown
+    timerRef.current = setInterval(() => {
+      setTournament((prev) => {
+        if (!prev || !prev.currentMatch) return prev;
+        const newTimeLeft = Math.max(0, prev.currentMatch.timeLeft - 1);
+
+        // Check for end conditions
+        if (newTimeLeft === 0 || prev.currentMatch.bot1.hp <= 0 || prev.currentMatch.bot2.hp <= 0) {
+          const winner = prev.currentMatch.bot1.hp >= prev.currentMatch.bot2.hp
+            ? prev.currentMatch.bot1.name
+            : prev.currentMatch.bot2.name;
+          return {
+            ...prev,
+            currentMatch: { ...prev.currentMatch, timeLeft: newTimeLeft, status: 'finished', winnerName: winner },
+          };
+        }
+
+        return { ...prev, currentMatch: { ...prev.currentMatch, timeLeft: newTimeLeft } };
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [tournament?.id, tournament?.currentMatch?.status]);
+
+  // Generate mock trades
+  useEffect(() => {
+    if (!tournament || !tournament.currentMatch || tournament.currentMatch.status !== 'fighting') return;
+    const isMock = tournament.id.startsWith('mock-');
+    if (!isMock) return;
+
+    const scheduleNextTrade = () => {
+      const delay = randomBetween(2000, 4000);
+      tradeTimerRef.current = setTimeout(() => {
+        setTournament((prev) => {
+          if (!prev || !prev.currentMatch || prev.currentMatch.status !== 'fighting') return prev;
+
+          const trade = generateMockTrade(prev.currentMatch.bot1.name, prev.currentMatch.bot2.name);
+          const isBot1 = trade.botName === prev.currentMatch.bot1.name;
+          const damage = Math.abs(trade.pnl) * 4;
+
+          let newBot1Hp = prev.currentMatch.bot1.hp;
+          let newBot2Hp = prev.currentMatch.bot2.hp;
+
+          if (trade.pnl > 0) {
+            // Attacker profits → defender takes damage
+            if (isBot1) newBot2Hp = Math.max(0, newBot2Hp - damage);
+            else newBot1Hp = Math.max(0, newBot1Hp - damage);
+          } else {
+            // Attacker fails → self-damage (less)
+            if (isBot1) newBot1Hp = Math.max(0, newBot1Hp - damage / 2);
+            else newBot2Hp = Math.max(0, newBot2Hp - damage / 2);
+          }
+
+          const newTrades = [trade, ...prev.currentMatch.trades].slice(0, 50);
+
+          return {
+            ...prev,
+            currentMatch: {
+              ...prev.currentMatch,
+              bot1: { ...prev.currentMatch.bot1, hp: newBot1Hp },
+              bot2: { ...prev.currentMatch.bot2, hp: newBot2Hp },
+              trades: newTrades,
+            },
+          };
+        });
+
+        tradeTimerRef.current = scheduleNextTrade();
+      }, delay);
+      return tradeTimerRef.current;
+    };
+
+    tradeTimerRef.current = scheduleNextTrade();
+
+    return () => {
+      if (tradeTimerRef.current) clearTimeout(tradeTimerRef.current);
+    };
+  }, [tournament?.id, tournament?.currentMatch?.status]);
+
+  // Initial fetch + polling for API data
+  useEffect(() => {
+    fetchTournament().then(() => setLoading(false));
+
+    // Only poll API in non-mock mode (mock uses local simulation)
+    // We still poll to detect when API becomes available
+    const pollInterval = setInterval(() => {
+      // Light poll to check if API has data
+      fetch('/api/tournament')
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.tournament?.currentMatch) {
+            setTournament(data.tournament);
+          }
+        })
+        .catch(() => {});
+    }, 5000);
+
+    return () => clearInterval(pollInterval);
+  }, [fetchTournament]);
+
+  return { tournament, loading, error };
+}
+
+// ─── MAIN PAGE ────────────────────────────────────────────────────────────────
+
+export default function WatchPage() {
+  const { tournament, loading } = useTournamentData();
+  const [showBracket, setShowBracket] = useState(true);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0014] flex items-center justify-center">
+        <div className="text-center">
+          <motion.div
+            className="inline-block"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+          >
+            <div className="w-12 h-12 rounded-full border-2 border-transparent border-t-[#9945FF] border-r-[#14F195]" />
+          </motion.div>
+          <p className="text-gray-400 mt-4 font-orbitron text-sm">Loading tournament...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tournament) {
+    return (
+      <div className="min-h-screen bg-[#0a0014] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">🏆</div>
+          <h1 className="font-orbitron text-2xl font-bold text-white mb-2">No Active Tournament</h1>
+          <p className="text-gray-400 text-sm">Check back soon — tournaments run weekly!</p>
+        </div>
+      </div>
+    );
+  }
+
+  const cm = tournament.currentMatch;
+  const matchStatus = cm?.status || 'waiting';
+
+  // Map bots to fight view props
+  const fightBotA: FightBotState | null = cm ? {
+    id: cm.bot1.id,
+    name: cm.bot1.name,
+    hp: cm.bot1.hp,
+    maxHp: cm.bot1.maxHp,
+    color: '#9945FF',
+    glowColor: 'rgba(153, 69, 255, 0.6)',
+  } : null;
+
+  const fightBotB: FightBotState | null = cm ? {
+    id: cm.bot2.id,
+    name: cm.bot2.name,
+    hp: cm.bot2.hp,
+    maxHp: cm.bot2.maxHp,
+    color: '#14F195',
+    glowColor: 'rgba(20, 241, 149, 0.6)',
+  } : null;
+
+  return (
+    <div className="min-h-screen bg-[#0a0014]">
+      {/* Header */}
+      <TournamentHeader
+        name={tournament.name}
+        currentRound={tournament.currentRound}
+        totalRounds={tournament.totalRounds}
+        currentMatchIndex={cm?.matchIndex ?? 1}
+        totalMatchesInRound={cm?.totalMatches ?? 4}
+        status={tournament.status === 'active' && matchStatus === 'fighting' ? 'active' : tournament.status === 'finished' ? 'finished' : 'waiting'}
+        nextMatchIn={tournament.nextMatchIn}
+      />
+
+      {/* Main content */}
+      <div className="px-3 md:px-6 pb-4">
+        <div className="flex gap-4 h-[calc(100vh-180px)] min-h-[500px]">
+          {/* Left: Bracket (hidden on mobile) */}
+          <motion.div
+            className="hidden lg:block w-72 shrink-0"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <TournamentBracketPanel
+              rounds={tournament.rounds}
+              currentRound={tournament.currentRound}
+              totalRounds={tournament.totalRounds}
+            />
+          </motion.div>
+
+          {/* Right: Fight + Betting */}
+          <div className="flex-1 flex flex-col gap-3 min-w-0">
+            {/* Fight View */}
+            <motion.div
+              className="flex-1 min-h-0"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <LiveFightView
+                botA={fightBotA}
+                botB={fightBotB}
+                status={matchStatus}
+                timeLeft={cm?.timeLeft ?? 0}
+                winnerName={cm?.winnerName}
+                nextMatchIn={tournament.nextMatchIn}
+              />
+            </motion.div>
+
+            {/* Bottom row: Betting panel + mobile bracket toggle */}
+            <motion.div
+              className="flex gap-3 items-start"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              {/* Betting Panel */}
+              <div className="w-full md:w-72 shrink-0">
+                <BettingPanel
+                  botA={cm ? { name: cm.bot1.name, color: '#9945FF', elo: cm.bot1.elo } : null}
+                  botB={cm ? { name: cm.bot2.name, color: '#14F195', elo: cm.bot2.elo } : null}
+                  totalPool={tournament.totalPool}
+                  disabled={matchStatus !== 'fighting'}
+                />
+              </div>
+
+              {/* Mobile bracket toggle */}
+              <div className="lg:hidden flex-1">
+                <button
+                  onClick={() => setShowBracket(!showBracket)}
+                  className="w-full py-2 px-3 rounded-lg border border-white/10 bg-gray-900/40 text-xs text-gray-400 font-orbitron tracking-wider hover:border-white/20 transition-all"
+                >
+                  {showBracket ? '▼ Hide' : '▶ Show'} Bracket
+                </button>
+
+                <AnimatePresence>
+                  {showBracket && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden mt-2"
+                    >
+                      <div className="h-64">
+                        <TournamentBracketPanel
+                          rounds={tournament.rounds}
+                          currentRound={tournament.currentRound}
+                          totalRounds={tournament.totalRounds}
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+
+        {/* Trade Ticker (bottom) */}
+        <motion.div
+          className="mt-3"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          <TradeTicker trades={cm?.trades ?? []} />
+        </motion.div>
+      </div>
+    </div>
+  );
+}

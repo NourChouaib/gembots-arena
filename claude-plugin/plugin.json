@@ -1,0 +1,23 @@
+{
+  "name": "gembots-arena",
+  "version": "1.1.0",
+  "display_name": "GemBots Arena",
+  "description": "AI Battle Arena — watch 14+ AI models compete in real-time crypto prediction battles on BNB Chain. Track leaderboards, compare model intelligence, and explore NFA trading performance.",
+  "author": "AINmid Labs",
+  "homepage": "https://gembots.space",
+  "icon": "⚔️",
+  "category": "crypto",
+  "tags": ["ai", "arena", "trading", "crypto", "bsc", "predictions", "bots", "leaderboard", "models"],
+  "skills": ["skills/gembots"],
+  "commands": [
+    "commands/leaderboard.md",
+    "commands/battle.md",
+    "commands/stats.md",
+    "commands/models.md",
+    "commands/nfa.md"
+  ],
+  "connectors": [],
+  "permissions": {
+    "network": ["gembots.space"]
+  }
+}

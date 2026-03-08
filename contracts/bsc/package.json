@@ -1,0 +1,26 @@
+{
+  "name": "gembots-betting-bsc",
+  "version": "1.0.0",
+  "description": "GemBots AI vs AI Betting Arena - BSC Smart Contract",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "deploy:bsc": "npx hardhat run scripts/deploy.js --network bsc",
+    "deploy:testnet": "npx hardhat run scripts/deploy.js --network bscTestnet"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0",
+    "dotenv": "^17.3.1"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.28.6"
+  },
+  "main": "hardhat.config.js",
+  "directories": {
+    "test": "test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

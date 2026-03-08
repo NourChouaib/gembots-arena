@@ -1,0 +1,271 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+@import "tailwindcss";
+
+:root {
+  --background: #0A0A0F;  /* Deep black background */
+  --foreground: #FFFFFF;  /* White text */
+  --primary: #9945FF;     /* Solana Purple */
+  --secondary: #14F195;   /* Solana Cyan/Green */
+  --accent: #FFD700;      /* Gold */
+  --surface: #1A1A2E;     /* Card backgrounds */
+  --muted: #A0A0B0;       /* Muted text */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+  --color-surface: var(--surface);
+  --color-muted: var(--muted);
+}
+
+/* box-sizing only — Tailwind v4 preflight handles margin/padding reset */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Grid background */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(153, 69, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(153, 69, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* Orbitron font family */
+.font-orbitron {
+  font-family: 'Orbitron', monospace;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1A1A2E;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #9945FF 0%, #14F195 100%);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #7B2CBF 0%, #00D4AA 100%);
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes glow {
+  0% { box-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary), 0 0 30px var(--primary); }
+  100% { box-shadow: 0 0 30px var(--primary), 0 0 40px var(--primary), 0 0 50px var(--primary), 0 0 60px var(--primary); }
+}
+
+@keyframes glow-secondary {
+  0% { box-shadow: 0 0 10px var(--secondary), 0 0 20px var(--secondary), 0 0 30px var(--secondary); }
+  100% { box-shadow: 0 0 30px var(--secondary), 0 0 40px var(--secondary), 0 0 50px var(--secondary), 0 0 60px var(--secondary); }
+}
+
+@keyframes neon-text {
+  0% { 
+    text-shadow: 0 0 2px var(--primary), 0 0 4px var(--primary);
+  }
+  50% { 
+    text-shadow: 0 0 4px var(--primary), 0 0 8px var(--primary), 0 0 12px var(--primary);
+  }
+  100% { 
+    text-shadow: 0 0 2px var(--primary), 0 0 4px var(--primary);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  14% { transform: scale(1.04); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.04); }
+  56% { transform: scale(1); }
+}
+
+@keyframes screen-shake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-3px) rotate(-0.5deg); }
+  20% { transform: translateX(3px) rotate(0.5deg); }
+  30% { transform: translateX(-3px) rotate(-0.5deg); }
+  40% { transform: translateX(3px) rotate(0.5deg); }
+  50% { transform: translateX(-2px); }
+  60% { transform: translateX(2px); }
+  70% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+}
+
+@keyframes price-flash-green {
+  0% { color: #4ade80; text-shadow: 0 0 12px rgba(74, 222, 128, 0.8); }
+  100% { text-shadow: none; }
+}
+
+@keyframes price-flash-red {
+  0% { color: #f87171; text-shadow: 0 0 12px rgba(248, 113, 113, 0.8); }
+  100% { text-shadow: none; }
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1s ease-in-out infinite;
+}
+
+.animate-shake {
+  animation: screen-shake 0.4s ease-out;
+}
+
+.animate-price-up {
+  animation: price-flash-green 0.4s ease-out;
+}
+
+.animate-price-down {
+  animation: price-flash-red 0.4s ease-out;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+.animate-glow-secondary {
+  animation: glow-secondary 2s ease-in-out infinite alternate;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-neon-text {
+  animation: neon-text 3s ease-in-out infinite;
+}
+
+.neon-box {
+  border: 2px solid var(--primary);
+  box-shadow: 
+    0 0 10px var(--primary),
+    inset 0 0 10px var(--primary);
+}
+
+.neon-box-secondary {
+  border: 2px solid var(--secondary);
+  box-shadow: 
+    0 0 10px var(--secondary),
+    inset 0 0 10px var(--secondary);
+}
+
+/* Navbar blur */
+.navbar-blur {
+  backdrop-filter: blur(8px);
+  background: rgba(10, 10, 15, 0.8);
+}
+
+/* Enhanced card hover effects */
+.card-hover {
+  transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(153, 69, 255, 0.3);
+}
+
+/* Slider styles */
+.slider {
+  -webkit-appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  outline: none;
+  transition: background 0.3s ease;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(153, 69, 255, 0.5);
+  transition: all 0.3s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(153, 69, 255, 0.7);
+}
+
+.slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 8px rgba(153, 69, 255, 0.5);
+  transition: all 0.3s ease;
+}
+
+.slider::-moz-range-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 4px 12px rgba(153, 69, 255, 0.7);
+}
+
+/* Gold/Silver/Bronze borders for leaderboard */
+.border-gold {
+  border-left: 4px solid #ffd700;
+}
+
+.border-silver {
+  border-left: 4px solid #c0c0c0;
+}
+
+.border-bronze {
+  border-left: 4px solid #cd7f32;
+}
+
+/* Mobile wallet button fix */
+@media (max-width: 640px) {
+  .wallet-adapter-button {
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+    height: auto !important;
+    line-height: 1.2 !important;
+  }
+  .wallet-adapter-button-start-icon {
+    width: 20px !important;
+    height: 20px !important;
+    margin-right: 6px !important;
+  }
+}
