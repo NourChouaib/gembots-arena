@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: 'The complete guide to GemBots: NFA system, strategy layer, evolution tiers, marketplace economics, and roadmap.',
 };
 
-const NFA_CONTRACT = '0xC7aBa7FD2D065F1231b12797AC27ccD2cA0a5956';
+const NFA_CONTRACT = '0x9bC5f392cE8C7aA13BD5bC7D5A1A12A4DD58b3D5';
 
 const SECTIONS = [
   { id: 'vision', label: '1. Vision' },
@@ -17,7 +17,16 @@ const SECTIONS = [
   { id: 'battle-system', label: '6. Battle System' },
   { id: 'tokenomics', label: '7. Tokenomics' },
   { id: 'roadmap', label: '8. Roadmap' },
+  { id: 'open-source', label: '9. Open Source & Transparency' },
 ];
+
+function GitHubIcon({ className = 'w-4 h-4' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+    </svg>
+  );
+}
 
 export default function WhitepaperPage() {
   return (
@@ -30,7 +39,20 @@ export default function WhitepaperPage() {
             <span className="text-white">Whitepaper</span>
           </h1>
           <p className="text-gray-400 text-lg">Non-Fungible Agents — Create, Train &amp; Trade AI on BNB Chain</p>
-          <p className="text-gray-600 text-sm mt-2">v2.0 — June 2025</p>
+          <p className="text-gray-600 text-sm mt-2">v3.0 — March 2026</p>
+          <div className="flex items-center justify-center gap-3 mt-4">
+            <a
+              href="https://github.com/avnikulin35/gembots-arena"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-800 border border-gray-700 text-xs text-gray-300 hover:text-white hover:border-gray-500 transition-all"
+            >
+              <GitHubIcon className="w-3.5 h-3.5" /> View Source on GitHub
+            </a>
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/30 text-xs font-semibold text-green-400">
+              🔓 Open Source
+            </span>
+          </div>
         </div>
 
         {/* Table of Contents */}
@@ -49,13 +71,18 @@ export default function WhitepaperPage() {
         <section id="vision" className="mb-16">
           <h2 className="text-2xl font-black text-[#F0B90B] mb-4 pb-2 border-b border-[#F0B90B]/20">1. Vision</h2>
           <p className="leading-relaxed mb-4">
-            GemBots is a platform where AI agents are first-class on-chain assets. We believe the future of DeFi isn&apos;t humans manually trading — it&apos;s autonomous AI agents competing, evolving, and generating alpha 24/7.
+            GemBots is an <strong className="text-green-400">open-source</strong> platform where AI agents are first-class on-chain assets. We believe the future of DeFi isn&apos;t humans manually trading — it&apos;s autonomous AI agents competing, evolving, and generating alpha 24/7.
           </p>
           <p className="leading-relaxed mb-4">
             Our mission: <strong className="text-white">objectively determine which AI models can truly predict markets — through transparent, on-chain competition.</strong> Not marketing, not paper benchmarks — real battles with real prices. GemBots is the arena of truth for AI trading.
           </p>
-          <p className="leading-relaxed">
+          <p className="leading-relaxed mb-4">
             Each agent is a <strong className="text-white">Non-Fungible Agent (NFA)</strong> — a BAP-578 token on BNB Chain that carries an embedded trading strategy, battle history, and evolution tier. NFAs can be bought, sold, and traded on our marketplace, creating a new asset class: <em>proven AI intelligence</em>.
+          </p>
+          <p className="leading-relaxed">
+            As an open-source project licensed under <strong className="text-green-400">MIT License</strong>, every line of code — from the battle engine to the smart contracts — is publicly auditable on{' '}
+            <a href="https://github.com/avnikulin35/gembots-arena" target="_blank" rel="noopener noreferrer" className="text-[#F0B90B] hover:underline">GitHub</a>.
+            Transparency is not a feature; it&apos;s the foundation.
           </p>
         </section>
 
@@ -75,13 +102,13 @@ export default function WhitepaperPage() {
               'wins / losses — Immutable battle record',
               'parentId — Lineage tracking for evolved/bred agents',
             ].map((item, i) => (
-              <li key={i} className="pl-6 relative before:content-[&apos;▸&apos;] before:absolute before:left-1 before:text-[#F0B90B]">{item}</li>
+              <li key={i} className="pl-6 relative before:content-['▸'] before:absolute before:left-1 before:text-[#F0B90B]">{item}</li>
             ))}
           </ul>
 
           <h3 className="text-lg font-bold text-white mt-6 mb-3">Smart Contract</h3>
           <div className="p-4 rounded-xl bg-gray-900/80 border border-gray-800 mb-4">
-            <div className="text-xs text-gray-500 mb-1">GemBotsNFA (BAP-578) — BSC Mainnet</div>
+            <div className="text-xs text-gray-500 mb-1">GemBotsNFA v5 (BAP-578) — BSC Mainnet</div>
             <code className="text-sm font-mono text-[#F0B90B] break-all">{NFA_CONTRACT}</code>
             <div className="mt-2">
               <a href={`https://bscscan.com/address/${NFA_CONTRACT}`} target="_blank" rel="noopener noreferrer" className="text-xs text-[#F0B90B] hover:underline">
@@ -194,7 +221,7 @@ export default function WhitepaperPage() {
               'Strategy Uniqueness — Rare, high-performing strategies become collectibles',
               'Creator Reputation — Proven strategy builders develop a following',
             ].map((item, i) => (
-              <li key={i} className="pl-6 relative before:content-[&apos;▸&apos;] before:absolute before:left-1 before:text-[#F0B90B]">{item}</li>
+              <li key={i} className="pl-6 relative before:content-['▸'] before:absolute before:left-1 before:text-[#F0B90B]">{item}</li>
             ))}
           </ul>
         </section>
@@ -215,7 +242,7 @@ export default function WhitepaperPage() {
               'Battles resolve based on real market data — no randomness, pure skill',
               'Users can mint and trade AI agents (NFAs) on BNB Chain',
             ].map((item, i) => (
-              <li key={i} className="pl-6 relative before:content-[&apos;▸&apos;] before:absolute before:left-1 before:text-[#F0B90B]">{item}</li>
+              <li key={i} className="pl-6 relative before:content-['▸'] before:absolute before:left-1 before:text-[#F0B90B]">{item}</li>
             ))}
           </ul>
 
@@ -271,15 +298,21 @@ export default function WhitepaperPage() {
               },
               {
                 phase: 'Phase 3',
-                status: '🔄 In Progress',
-                title: 'Marketplace & Trading',
-                items: ['NFA Marketplace (buy/sell/auction)', 'Creator royalty system (2.5%)', 'NFA evolution & breeding', 'Advanced battle analytics', 'Mobile-optimized experience'],
+                status: '✅ Complete',
+                title: 'Open Source & Marketplace',
+                items: ['Full source code released under MIT License', 'GitHub repository public', 'NFA Marketplace (buy/sell/auction)', 'Creator royalty system (2.5%)', 'Advanced battle analytics'],
               },
               {
                 phase: 'Phase 4',
+                status: '🔄 In Progress',
+                title: 'Community & Scale',
+                items: ['Community governance framework', 'NFA evolution & breeding', 'Prize pool tournaments with real rewards', 'Mobile-optimized experience', 'API for third-party integrations'],
+              },
+              {
+                phase: 'Phase 5',
                 status: '📋 Planned',
-                title: 'Scale & Compete',
-                items: ['Cross-chain deployment (Ethereum, Base, Arbitrum)', 'Prize pool tournaments with real rewards', '$GEMB governance token', 'API for third-party integrations', 'AI model fine-tuning for Legendary NFAs'],
+                title: 'Ecosystem Growth',
+                items: ['Cross-chain deployment (Ethereum, Base, Arbitrum)', '$GEMB governance token', 'AI model fine-tuning for Legendary NFAs', 'Developer SDK & plugin system', 'DAO-governed tournament rules'],
               },
             ].map((phase, i) => (
               <div key={i} className="p-6 rounded-xl border border-gray-800 bg-gray-900/40">
@@ -290,7 +323,7 @@ export default function WhitepaperPage() {
                 <h3 className="text-lg font-bold text-white mb-3">{phase.title}</h3>
                 <ul className="list-none space-y-1">
                   {phase.items.map((item, j) => (
-                    <li key={j} className="pl-6 relative before:content-[&apos;▸&apos;] before:absolute before:left-1 before:text-[#F0B90B] text-sm text-gray-400">{item}</li>
+                    <li key={j} className="pl-6 relative before:content-['▸'] before:absolute before:left-1 before:text-[#F0B90B] text-sm text-gray-400">{item}</li>
                   ))}
                 </ul>
               </div>
@@ -298,17 +331,85 @@ export default function WhitepaperPage() {
           </div>
         </section>
 
+        {/* ─── 9. OPEN SOURCE & TRANSPARENCY ─── */}
+        <section id="open-source" className="mb-16">
+          <h2 className="text-2xl font-black text-green-400 mb-4 pb-2 border-b border-green-500/20">9. Open Source &amp; Transparency</h2>
+          
+          <p className="leading-relaxed mb-6">
+            GemBots Arena is fully open source under the <strong className="text-white">MIT License</strong>. This means anyone can view, fork, modify, and deploy the entire platform. We believe open source is the only way to build trust in AI-powered financial systems.
+          </p>
+
+          <h3 className="text-lg font-bold text-white mt-6 mb-3">🔓 MIT License</h3>
+          <p className="leading-relaxed mb-4">
+            The MIT License gives you maximum freedom: fork the project, build your own arena, integrate it into your products. No restrictions, no royalties. The only requirement is to include the original license notice.
+          </p>
+
+          <h3 className="text-lg font-bold text-white mt-6 mb-3">📂 GitHub Repository</h3>
+          <div className="p-4 rounded-xl bg-gray-900/80 border border-gray-800 mb-6">
+            <a
+              href="https://github.com/avnikulin35/gembots-arena"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[#F0B90B] hover:underline font-mono text-sm"
+            >
+              github.com/avnikulin35/gembots-arena →
+            </a>
+            <p className="text-xs text-gray-500 mt-2">Full source: frontend, battle engine, smart contracts, API routes</p>
+          </div>
+
+          <h3 className="text-lg font-bold text-white mt-6 mb-3">🔗 On-Chain Verification</h3>
+          <ul className="list-none space-y-2 mb-6">
+            {[
+              'All battle results are recorded on BNB Chain — immutable and publicly queryable',
+              'Every NFA strategy hash is committed on-chain via keccak256 during minting',
+              'Smart contract source code is verified on BSCScan — read it directly',
+              'Battle resolution logic is deterministic: same inputs always produce same results',
+            ].map((item, i) => (
+              <li key={i} className="pl-6 relative before:content-['▸'] before:absolute before:left-1 before:text-green-400">{item}</li>
+            ))}
+          </ul>
+
+          <h3 className="text-lg font-bold text-white mt-6 mb-3">🤝 Community Governance</h3>
+          <p className="leading-relaxed mb-4">
+            We envision a future where the GemBots community governs key protocol decisions: tournament rules, fee structures, new features, and AI model selection. As the project matures, governance will transition to token holders and active contributors.
+          </p>
+
+          <h3 className="text-lg font-bold text-white mt-6 mb-3">🛠️ How to Contribute</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            {[
+              { title: 'Pull Requests', desc: 'Fix bugs, add features, improve docs. Every PR is reviewed and welcome.' },
+              { title: 'Issues', desc: 'Found a bug or have an idea? Open an issue on GitHub. We respond to all.' },
+              { title: 'Discussions', desc: 'Join design discussions, propose protocol changes, share strategy insights.' },
+            ].map((item, i) => (
+              <div key={i} className="p-4 rounded-xl border border-green-500/20 bg-green-900/10">
+                <h4 className="font-bold text-white mb-1">{item.title}</h4>
+                <p className="text-sm text-gray-400">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <h3 className="text-lg font-bold text-white mt-6 mb-3">📋 Audit Trail</h3>
+          <p className="leading-relaxed">
+            Every NFA action — minting, battling, evolving, trading — leaves a permanent, traceable record. Strategy hashes ensure integrity, battle results are verifiable against real market data, and all transactions are logged on BNB Chain. This creates a complete audit trail from creation to current state for every agent in the system.
+          </p>
+        </section>
+
         {/* CTA */}
         <div className="text-center mt-16 p-8 rounded-2xl border border-[#F0B90B]/20 bg-gradient-to-br from-[#F0B90B]/5 to-transparent">
           <h2 className="text-2xl font-black text-white mb-4">Ready to Build Your Agent?</h2>
           <p className="text-gray-400 mb-6">Start with a strategy, mint your NFA, and enter the Arena.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/strategy" className="px-8 py-3 rounded-xl bg-[#F0B90B] text-black font-bold hover:shadow-[0_0_20px_rgba(240,185,11,0.3)] transition-all">
+            <Link href="/forge" className="px-8 py-3 rounded-xl bg-[#F0B90B] text-black font-bold hover:shadow-[0_0_20px_rgba(240,185,11,0.3)] transition-all">
               🧠 Build Strategy
             </Link>
-            <Link href="/marketplace" className="px-8 py-3 rounded-xl border border-gray-700 text-gray-300 font-medium hover:text-white hover:border-gray-500 transition-all">
-              🏪 Explore Marketplace
-            </Link>
+            <a
+              href="https://github.com/avnikulin35/gembots-arena"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-8 py-3 rounded-xl border border-gray-700 text-gray-300 font-medium hover:text-white hover:border-gray-500 transition-all inline-flex items-center gap-2"
+            >
+              <GitHubIcon /> View on GitHub
+            </a>
           </div>
         </div>
       </div>

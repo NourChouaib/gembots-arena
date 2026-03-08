@@ -8,7 +8,7 @@ import { rateLimit, getClientIP } from '@/lib/rate-limit';
 export async function POST(request: NextRequest) {
   // Rate limit
   const ip = getClientIP(request);
-  const { allowed } = rateLimit(`arena-bot-trade:${ip}`, 5, 60_000);
+  const { allowed } = rateLimit(`arena-bot-trade:${ip}`, 10, 60_000);
   if (!allowed) {
     return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
   }
@@ -91,6 +91,13 @@ export async function POST(request: NextRequest) {
 
 // GET endpoint для получения недавних торговых событий
 export async function GET(request: NextRequest) {
+  // Rate limit: 10 req/min per IP
+  const ip = getClientIP(request);
+  const { allowed } = rateLimit(`arena-bot-trade:${ip}`, 10, 60_000);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const limit = parseInt(searchParams.get('limit') || '20');

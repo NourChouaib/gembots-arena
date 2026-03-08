@@ -80,7 +80,7 @@ async function recordBattleOnChain(battleId, winnerNfaId, loserNfaId, tokenSymbo
   }
 }
 
-const SUPABASE_URL = 'process.env.SUPABASE_URL';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY ;
 
 const RESOLVE_INTERVAL = 10000; // 10 seconds

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ethers } from 'ethers';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -140,7 +141,14 @@ async function loadAllNFAs() {
   return result;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Rate limit: 10 req/min per IP
+  const ip = getClientIP(request);
+  const { allowed } = rateLimit(`nfas:${ip}`, 10, 60_000);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   try {
     const data = await loadAllNFAs();
     return NextResponse.json(data, {

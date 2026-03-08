@@ -31,7 +31,7 @@ if (fs.existsSync(envPath)) {
 
 const path = require('path');
 const { getNFAModifiedPrediction, getCacheStats } = require('./lib/nfa-strategy-adapter');
-const { getProvider } = require('../src/lib/ai-provider'); // Import the AI provider
+const { getProvider } = require('./lib/ai-provider-shim');
 
 // ---- League System ----
 const NFA_ELO_MULTIPLIER = 1.5;     // NFA League gives 1.5x ELO per win

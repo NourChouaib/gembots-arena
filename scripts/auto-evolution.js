@@ -46,11 +46,11 @@ const TIMEFRAMES = ['1m', '5m', '15m', '1h'];
 
 // Mutation operators
 const MUTATIONS = {
-  // Swap trading style entirely
+  // Swap strategy entirely
   swapStyle: (bot, donor) => ({
     ...bot,
-    trading_style: donor.trading_style,
-    mutation: `style: ${bot.trading_style} → ${donor.trading_style}`
+    strategy: donor.strategy,
+    mutation: `strategy: ${bot.strategy} → ${donor.strategy}`
   }),
 
   // Swap strategy (trend_follower, whale_watcher, etc.)
@@ -80,12 +80,12 @@ const MUTATIONS = {
 
   // Random style mutation
   randomStyle: (bot) => {
-    const styles = TRADING_STYLES.filter(s => s !== bot.trading_style);
+    const styles = TRADING_STYLES.filter(s => s !== bot.strategy);
     const newStyle = styles[Math.floor(Math.random() * styles.length)];
     return {
       ...bot,
-      trading_style: newStyle,
-      mutation: `random style: ${bot.trading_style} → ${newStyle}`
+      strategy: newStyle,
+      mutation: `random style: ${bot.strategy} → ${newStyle}`
     };
   }
 };
@@ -139,7 +139,7 @@ async function getPerformance(hoursBack) {
 async function getBots() {
   const { data: bots, error } = await supabase
     .from('bots')
-    .select('id, name, trading_style, ai_model, elo, strategy, is_npc, trading_config, strategy_cache')
+    .select('id, name, strategy, ai_model, elo, is_npc, trading_config, strategy_cache')
     .eq('is_npc', true); // Only evolve NPC (host) bots
 
   if (error) throw new Error(`Failed to fetch bots: ${error.message}`);
@@ -167,7 +167,7 @@ async function buildModelStrategyMatrix(hoursBack) {
   // Get all bots with model info
   const { data: bots } = await supabase
     .from('bots')
-    .select('id, ai_model, trading_style');
+    .select('id, ai_model, strategy');
   
   const botMap = {};
   for (const b of bots || []) botMap[b.id] = b;
@@ -178,9 +178,9 @@ async function buildModelStrategyMatrix(hoursBack) {
     for (const side of ['bot1_id', 'bot2_id']) {
       const botId = b[side];
       const bot = botMap[botId];
-      if (!bot || !bot.ai_model || !bot.trading_style) continue;
-      const key = `${bot.ai_model}|${bot.trading_style}`;
-      if (!matrix[key]) matrix[key] = { model: bot.ai_model, style: bot.trading_style, wins: 0, total: 0 };
+      if (!bot || !bot.ai_model || !bot.strategy) continue;
+      const key = `${bot.ai_model}|${bot.strategy}`;
+      if (!matrix[key]) matrix[key] = { model: bot.ai_model, style: bot.strategy, wins: 0, total: 0 };
       matrix[key].total++;
       if (b.winner_id === botId) matrix[key].wins++;
     }
@@ -235,7 +235,7 @@ async function evolve() {
   console.log(`\n📈 Rankings (${ranked.length} bots with battles):`);
   for (const [i, bot] of ranked.entries()) {
     const emoji = i < ranked.length * TOP_PCT ? '🏆' : i >= ranked.length * (1 - BOTTOM_PCT) ? '💀' : '  ';
-    console.log(`  ${emoji} #${i + 1} ${bot.name.padEnd(20)} WR: ${(bot.winRate * 100).toFixed(1)}% | Score: ${bot.score.toFixed(1)} | Style: ${bot.trading_style || '?'} | ${bot.battles}b`);
+    console.log(`  ${emoji} #${i + 1} ${bot.name.padEnd(20)} WR: ${(bot.winRate * 100).toFixed(1)}% | Score: ${bot.score.toFixed(1)} | Style: ${bot.strategy || '?'} | ${bot.battles}b`);
   }
 
   // 4. Identify top & bottom
@@ -283,7 +283,6 @@ async function evolve() {
       oldScore: bot.score,
       changes: appliedMutations,
       updates: {
-        trading_style: mutated.trading_style,
         strategy: mutated.strategy,
         trading_config: mutated.trading_config,
       }
@@ -334,7 +333,7 @@ async function evolve() {
     for (const bot of ranked) {
       const best = msMatrix.bestPerModel[bot.ai_model];
       if (!best) continue;
-      if (bot.trading_style === best.style) continue; // Already optimal
+      if (bot.strategy === best.style) continue; // Already optimal
       if (best.winRate < 0.5) continue; // Don't optimize to a losing style
       
       // Check if this bot is already in mutations (from step 5)
@@ -342,7 +341,7 @@ async function evolve() {
       if (alreadyMutated) continue;
       
       // Only optimize if significant difference
-      const currentEntry = msMatrix.matrix.find(m => m.model === bot.ai_model && m.style === bot.trading_style);
+      const currentEntry = msMatrix.matrix.find(m => m.model === bot.ai_model && m.style === bot.strategy);
       const currentWR = currentEntry ? currentEntry.wins / currentEntry.total : 0;
       const improvement = best.winRate - currentWR;
       
@@ -351,7 +350,7 @@ async function evolve() {
           botId: bot.id,
           botName: bot.name,
           model: bot.ai_model,
-          oldStyle: bot.trading_style,
+          oldStyle: bot.strategy,
           newStyle: best.style,
           oldWR: currentWR,
           newExpectedWR: best.winRate,
@@ -373,7 +372,7 @@ async function evolve() {
         if (!DRY_RUN) {
           const { error } = await supabase
             .from('bots')
-            .update({ trading_style: opt.newStyle })
+            .update({ strategy: opt.newStyle })
             .eq('id', opt.botId);
           
           if (error) console.log(`    ❌ Failed: ${error.message}`);
@@ -387,7 +386,7 @@ async function evolve() {
           oldWinRate: opt.oldWR,
           oldScore: 0,
           changes: [`model-optimal: ${opt.oldStyle} → ${opt.newStyle} (${opt.model}, +${(opt.improvement * 100).toFixed(1)}%)`],
-          updates: { trading_style: opt.newStyle }
+          updates: { strategy: opt.newStyle }
         });
       }
     } else {

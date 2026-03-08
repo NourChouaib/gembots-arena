@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 10 req/min per IP
+  const ip = getClientIP(req);
+  const { allowed } = rateLimit(`purchases:${ip}`, 10, 60_000);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   try {
     const { productId, txHash, amount, buyer } = await req.json();
 

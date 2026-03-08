@@ -58,9 +58,19 @@ function AnimatedCounter({ target, duration = 2000 }: { target: number; duration
   return <>{count.toLocaleString()}</>;
 }
 
+// ─── GITHUB ICON ──────────────────────────────────────────────────────────────
+
+function GitHubIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+    </svg>
+  );
+}
+
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
-const NFA_CONTRACT = '0xC7aBa7FD2D065F1231b12797AC27ccD2cA0a5956';
+const NFA_CONTRACT = '0x9bC5f392cE8C7aA13BD5bC7D5A1A12A4DD58b3D5';
 
 const HOW_IT_WORKS = [
   {
@@ -82,6 +92,29 @@ const HOW_IT_WORKS = [
     icon: '🏆',
     title: 'Climb the Leaderboard',
     desc: 'Top-performing agents rise to the top. Prove your strategy is the best in the Arena.',
+  },
+];
+
+const WHY_OPEN_SOURCE = [
+  {
+    icon: '🔗',
+    title: 'On-Chain Verification',
+    desc: 'All battle results are recorded and verifiable on BNB Chain. No hidden logic, no black boxes.',
+  },
+  {
+    icon: '🔐',
+    title: 'Strategy Hash Integrity',
+    desc: 'Every NFA strategy is hashed with keccak256 and stored on-chain. Tampering is impossible.',
+  },
+  {
+    icon: '📂',
+    title: 'Full Source on GitHub',
+    desc: 'Every line of code is public. Audit the battle engine, verify the smart contracts, read the algorithms.',
+  },
+  {
+    icon: '🤝',
+    title: 'Community-Driven',
+    desc: 'Fork it, improve it, contribute. Open PRs, report issues, propose features. The arena belongs to everyone.',
   },
 ];
 
@@ -196,12 +229,10 @@ function NFACollectionPreview() {
       .then(r => r.json())
       .then(data => {
         if (data.nfas) {
-          // Sort by win rate (descending), take top 6 with battles
           const withBattles = data.nfas
             .filter((n: NFAItem) => n.totalBattles > 0)
             .sort((a: NFAItem, b: NFAItem) => b.winRate - a.winRate)
             .slice(0, 6);
-          // If less than 6, fill with others
           if (withBattles.length < 6) {
             const rest = data.nfas
               .filter((n: NFAItem) => n.totalBattles === 0)
@@ -215,7 +246,6 @@ function NFACollectionPreview() {
       .catch(() => {});
   }, []);
 
-  // Extract emoji from name (first character(s))
   const getEmoji = (name: string) => {
     const match = name.match(/^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F?)/u);
     return match ? match[0] : '🤖';
@@ -314,9 +344,22 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="flex flex-col items-center"
           >
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F0B90B]/10 border border-[#F0B90B]/30 mb-8">
-              <span className="w-2 h-2 rounded-full bg-[#F0B90B] animate-pulse" />
-              <span className="text-sm font-medium text-[#F0B90B]">BAP-578 NFAs Live on BNB Chain</span>
+            {/* Open Source + Live badges */}
+            <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#F0B90B]/10 border border-[#F0B90B]/30">
+                <span className="w-2 h-2 rounded-full bg-[#F0B90B] animate-pulse" />
+                <span className="text-sm font-medium text-[#F0B90B]">BAP-578 NFAs Live on BNB Chain</span>
+              </div>
+              <a
+                href="https://github.com/avnikulin35/gembots-arena"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-500/10 border border-green-500/30 hover:bg-green-500/20 transition-all"
+              >
+                <span className="text-sm">🔓</span>
+                <span className="text-sm font-medium text-green-400">Open Source</span>
+                <GitHubIcon className="w-4 h-4 text-green-400" />
+              </a>
             </div>
 
             <h1 className="text-5xl sm:text-6xl md:text-7xl font-black mb-6 leading-tight">
@@ -327,10 +370,14 @@ export default function HomePage() {
               </span>
             </h1>
 
-            <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+            <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-4 leading-relaxed">
               Build trading strategies. Mint them as Non-Fungible Agents (NFAs) on BSC.
               <br className="hidden sm:block" />
               Battle in the Arena. Evolve. Climb the Leaderboard.
+            </p>
+
+            <p className="text-sm text-gray-500 mb-10">
+              Fully Transparent • MIT License • Community-Driven
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
@@ -350,6 +397,14 @@ export default function HomePage() {
                 </span>
                 👁 Watch Battles
               </Link>
+              <a
+                href="https://github.com/avnikulin35/gembots-arena"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-56 text-center px-8 py-3.5 rounded-xl border border-gray-700 text-gray-300 font-bold text-lg hover:bg-gray-800 hover:border-gray-500 transition-all hover:scale-105 inline-flex items-center justify-center gap-2"
+              >
+                <GitHubIcon className="w-5 h-5" /> View Source
+              </a>
             </div>
           </motion.div>
 
@@ -386,7 +441,40 @@ export default function HomePage() {
           </motion.div>
         </section>
 
-        {/* ═══ 2. HOW IT WORKS ═══ */}
+        {/* ═══ 2. WHY OPEN SOURCE ═══ */}
+        <section className="w-full max-w-6xl mx-auto px-6 py-20 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl sm:text-4xl font-black mb-4">
+              Why <span className="text-green-400">Open Source</span>?
+            </h2>
+            <p className="text-gray-400 mb-12 max-w-xl mx-auto">
+              Transparency isn&apos;t a feature — it&apos;s the foundation. Every battle, every strategy, every line of code is verifiable.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+            {WHY_OPEN_SOURCE.map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="rounded-2xl border border-green-500/20 bg-gradient-to-br from-green-900/10 to-gray-900/40 p-6 hover:border-green-500/40 transition-all text-center"
+              >
+                <div className="text-4xl mb-4">{item.icon}</div>
+                <h3 className="text-lg font-bold text-white mb-2">{item.title}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* ═══ 3. HOW IT WORKS ═══ */}
         <section className="w-full max-w-6xl mx-auto px-6 py-20 text-center">
           <motion.h2
             initial={{ opacity: 0 }}
@@ -421,10 +509,10 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ═══ 3. NFA COLLECTION PREVIEW ═══ */}
+        {/* ═══ 4. NFA COLLECTION PREVIEW ═══ */}
         <NFACollectionPreview />
 
-        {/* ═══ 4. CONTRACT + CTA ═══ */}
+        {/* ═══ 5. CONTRACT + CTA ═══ */}
         <section className="w-full max-w-6xl mx-auto px-6 py-20 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -445,7 +533,7 @@ export default function HomePage() {
               <code className="text-xs sm:text-sm font-mono text-[#F0B90B]">{NFA_CONTRACT}</code>
             </div>
 
-            <div className="flex items-center justify-center gap-3 mb-10">
+            <div className="flex items-center justify-center gap-3 mb-10 flex-wrap">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/30 text-xs font-semibold text-green-400">
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                 Contract Verified
@@ -453,6 +541,9 @@ export default function HomePage() {
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-xs font-semibold text-blue-400">
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                 Open Source
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/30 text-xs font-semibold text-green-400">
+                MIT License
               </span>
             </div>
 
@@ -511,6 +602,7 @@ export default function HomePage() {
                 ['NFA Ownership (NFTs)', '❌', '❌', '❌', '✅'],
                 ['Strategy Marketplace', '❌', '❌', '❌', '✅'],
                 ['Spectator Mode', '❌', '❌', '❌', '✅'],
+                ['Open Source', '❌', '❌', '✅', '✅'],
               ].map(([feature, ca, aa, lb, gb], i) => (
                 <motion.div
                   key={i}
@@ -530,21 +622,6 @@ export default function HomePage() {
             </div>
           </motion.div>
         </section>
-
-        {/* ═══ FOOTER ═══ */}
-        <footer className="border-t border-gray-800 py-8 px-6">
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-            <div className="flex items-center gap-3">
-              <span className="text-xl">💎</span>
-              <span className="text-sm text-gray-500">GemBots Arena © 2025-2026</span>
-            </div>
-            <div className="flex items-center gap-6 text-sm text-gray-500">
-              <a href={`https://bscscan.com/address/${NFA_CONTRACT}`} target="_blank" rel="noopener noreferrer" className="hover:text-gray-300 transition-colors">BSCScan</a>
-              <Link href="/whitepaper" className="hover:text-gray-300 transition-colors">Whitepaper</Link>
-              <a href="https://x.com/gembotsbsc" target="_blank" rel="noopener noreferrer" className="hover:text-gray-300 transition-colors">Twitter</a>
-            </div>
-          </div>
-        </footer>
       </div>
     </div>
   );

@@ -1,10 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProvider } from "../../../../lib/ai-provider";
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 
 export const maxDuration = 120;
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 3 req/min per IP
+  const ip = getClientIP(req);
+  const { allowed } = rateLimit(`ai-generate-strategy:${ip}`, 3, 60_000);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   try {
     const provider = getProvider();
 
@@ -13,6 +21,14 @@ export async function POST(req: NextRequest) {
     if (!description || typeof description !== "string") {
       return NextResponse.json(
         { error: "Strategy description is required" },
+        { status: 400 }
+      );
+    }
+
+    // Input validation: max 200 chars for description
+    if (description.length > 200) {
+      return NextResponse.json(
+        { error: "Description must be 200 characters or less" },
         { status: 400 }
       );
     }

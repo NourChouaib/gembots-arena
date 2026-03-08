@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 
 /**
  * POST /api/nfa/save-config
@@ -20,6 +21,13 @@ import { supabase } from '@/lib/supabase';
  * }
  */
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 req/min per IP
+  const ip = getClientIP(request);
+  const { allowed } = rateLimit(`nfa-save-config:${ip}`, 5, 60_000);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   try {
     const body = await request.json();
     const { nfaId, tier, model, strategy, botName, botEmoji, systemPrompt, evmAddress, byok } = body;

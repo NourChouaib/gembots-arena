@@ -9,6 +9,13 @@ import { rateLimit, getClientIP } from '@/lib/rate-limit';
 let io: SocketIOServer;
 
 export async function GET(req: NextRequest) {
+  // Rate limit: 5 req/min per IP
+  const ip = getClientIP(req);
+  const { allowed } = rateLimit(`arena-socket:${ip}`, 5, 60_000);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   if (!io) {
     console.log('Initializing Arena Socket.IO server...');
     

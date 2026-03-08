@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { ethers } from 'ethers';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 
 const NFA_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_BSC_NFA_CONTRACT_ADDRESS || '0xC7aBa7FD2D065F1231b12797AC27ccD2cA0a5956';
 const BSC_RPC_URL = 'https://bsc-dataseed1.binance.org';
@@ -65,6 +66,13 @@ async function fetchStrategyFromChain(nfaId: number): Promise<string | null> {
  * Body: { botId: number, nfaId: number, evmAddress: string }
  */
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 req/min per IP
+  const ip = getClientIP(request);
+  const { allowed } = rateLimit(`nfa-link:${ip}`, 5, 60_000);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   try {
     const body = await request.json();
     const { botId, nfaId, evmAddress } = body;

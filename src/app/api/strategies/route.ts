@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { rateLimit, getClientIP } from '@/lib/rate-limit';
 
 const DEFAULT_STRATEGIES = [
   {
@@ -88,7 +89,14 @@ const DEFAULT_STRATEGIES = [
   },
 ];
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Rate limit: 10 req/min per IP
+  const ip = getClientIP(request);
+  const { allowed } = rateLimit(`strategies:${ip}`, 10, 60_000);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   return NextResponse.json({
     strategies: DEFAULT_STRATEGIES,
     count: DEFAULT_STRATEGIES.length,
@@ -96,6 +104,13 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  // Rate limit: 10 req/min per IP (shared with GET)
+  const ip = getClientIP(request);
+  const { allowed } = rateLimit(`strategies:${ip}`, 10, 60_000);
+  if (!allowed) {
+    return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  }
+
   try {
     const body = await request.json();
 
@@ -103,6 +118,14 @@ export async function POST(request: Request) {
     if (!body.name || !body.base_style || !body.params) {
       return NextResponse.json(
         { error: 'Missing required fields: name, base_style, params' },
+        { status: 400 }
+      );
+    }
+
+    // Input validation: only alphanumeric + basic punctuation in name
+    if (typeof body.name !== 'string' || body.name.length > 200 || !/^[a-zA-Z0-9\s\-_.,!?()]+$/.test(body.name)) {
+      return NextResponse.json(
+        { error: 'Invalid name: max 200 chars, alphanumeric and basic punctuation only' },
         { status: 400 }
       );
     }
