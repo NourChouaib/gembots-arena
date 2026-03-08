@@ -180,7 +180,7 @@ const BenchmarkPage: React.FC = () => {
 
         setHeroStats(heroData.data);
         setLeaderboard(leaderboardData.data);
-        setModelPerformance(modelsData.data.sort((a: ModelPerformance, b: ModelPerformance) => b.avg_win_rate - a.avg_win_rate));
+        setModelPerformance(modelsData.data.filter((m: ModelPerformance) => m.model_name && m.model_name !== '' && m.model_name !== 'unknown').sort((a: ModelPerformance, b: ModelPerformance) => b.avg_win_rate - a.avg_win_rate));
       } catch (err) {
         setError('Failed to load benchmark data.');
         console.error(err);
@@ -230,17 +230,17 @@ const BenchmarkPage: React.FC = () => {
               <div className="h-4/5 w-11/12 bg-gray-800 rounded"></div>
             </div>
           ) : (
-            <div className="bg-gray-900 rounded-lg shadow-lg p-4 md:p-6 h-[450px] md:h-[500px]">
+            <div className="bg-gray-900 rounded-lg shadow-lg p-4 md:p-6 h-[500px] md:h-[600px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={modelPerformance} margin={{ top: 20, right: 10, left: 0, bottom: 10 }}>
+                <BarChart data={modelPerformance} margin={{ top: 20, right: 10, left: 0, bottom: 20 }}>
                   <XAxis
                     dataKey="model_name"
                     tickFormatter={formatModelName}
-                    angle={-45}
+                    angle={-35}
                     textAnchor="end"
-                    height={100}
+                    height={120}
                     stroke="#a0aec0"
-                    tick={{ fill: '#cbd5e0', fontSize: 11 }}
+                    tick={{ fill: '#e2e8f0', fontSize: 12, fontWeight: 500 }}
                     interval={0}
                   />
                   <YAxis

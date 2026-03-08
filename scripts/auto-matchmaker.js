@@ -33,6 +33,87 @@ const path = require('path');
 const { getNFAModifiedPrediction, getCacheStats } = require('./lib/nfa-strategy-adapter');
 const { getProvider } = require('./lib/ai-provider-shim');
 
+// ---- Market Data for Training Dataset ----
+const BINANCE_SYMBOLS = {
+  BTC: 'BTCUSDT', SOL: 'SOLUSDT', ETH: 'ETHUSDT', BNB: 'BNBUSDT',
+  WIF: 'WIFUSDT', BONK: 'BONKUSDT', RENDER: 'RENDERUSDT', BOME: 'BOMEUSDT',
+  JTO: 'JTOUSDT', CAKE: 'CAKEUSDT', LINK: 'LINKUSDT', ADA: 'ADAUSDT',
+  XRP: 'XRPUSDT', PEPE: 'PEPEUSDT',
+};
+const BYBIT_SYMBOLS = { MEW: 'MEWUSDT', POPCAT: 'POPCATUSDT' };
+
+// Cache prices for 30s to avoid hammering APIs
+const priceCache = {};
+const PRICE_CACHE_TTL = 30000;
+
+async function fetchMarketContext(tokenSymbol) {
+  const now = Date.now();
+  const cacheKey = tokenSymbol;
+  if (priceCache[cacheKey] && (now - priceCache[cacheKey].ts) < PRICE_CACHE_TTL) {
+    return priceCache[cacheKey].data;
+  }
+
+  try {
+    let price = null;
+    const binanceSym = BINANCE_SYMBOLS[tokenSymbol];
+    const bybitSym = BYBIT_SYMBOLS[tokenSymbol];
+
+    if (binanceSym) {
+      // Fetch current price + 1h klines from Binance
+      const [tickerRes, klineRes] = await Promise.all([
+        fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${binanceSym}`).then(r => r.json()).catch(() => null),
+        fetch(`https://api.binance.com/api/v3/klines?symbol=${binanceSym}&interval=1h&limit=2`).then(r => r.json()).catch(() => null),
+      ]);
+
+      if (tickerRes && tickerRes.lastPrice) {
+        price = parseFloat(tickerRes.lastPrice);
+        const price1hAgo = klineRes && klineRes[0] ? parseFloat(klineRes[0][1]) : null; // open of previous 1h candle
+        const volume = tickerRes.volume ? parseFloat(tickerRes.volume) : null;
+        const quoteVolume = tickerRes.quoteVolume ? parseFloat(tickerRes.quoteVolume) : null;
+
+        // BTC price (always from Binance)
+        let btcPrice = null;
+        if (tokenSymbol !== 'BTC') {
+          const btcTicker = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT').then(r => r.json()).catch(() => null);
+          btcPrice = btcTicker ? parseFloat(btcTicker.price) : null;
+        } else {
+          btcPrice = price;
+        }
+
+        const ctx = {
+          market_price: price,
+          market_price_1h_ago: price1hAgo,
+          market_price_24h_ago: tickerRes.openPrice ? parseFloat(tickerRes.openPrice) : null,
+          market_btc_price: btcPrice,
+          market_volume_ratio: quoteVolume && tickerRes.weightedAvgPrice ? 1.0 : null, // simplified
+        };
+        priceCache[cacheKey] = { ts: now, data: ctx };
+        return ctx;
+      }
+    } else if (bybitSym) {
+      const tickerRes = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${bybitSym}`).then(r => r.json()).catch(() => null);
+      if (tickerRes?.result?.list?.[0]) {
+        const t = tickerRes.result.list[0];
+        price = parseFloat(t.lastPrice);
+        const btcTicker = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT').then(r => r.json()).catch(() => null);
+
+        const ctx = {
+          market_price: price,
+          market_price_1h_ago: null,
+          market_price_24h_ago: t.prevPrice24h ? parseFloat(t.prevPrice24h) : null,
+          market_btc_price: btcTicker ? parseFloat(btcTicker.price) : null,
+          market_volume_ratio: null,
+        };
+        priceCache[cacheKey] = { ts: now, data: ctx };
+        return ctx;
+      }
+    }
+  } catch (e) {
+    // Silent fail — market data is optional, battles still work without it
+  }
+  return null;
+}
+
 // ---- League System ----
 const NFA_ELO_MULTIPLIER = 1.5;     // NFA League gives 1.5x ELO per win
 const NFA_LEAGUE_CYCLE = 3;          // Every 3rd cycle is NFA League
@@ -636,21 +717,33 @@ async function joinRoom(bot, room, strategy, token, preserveChallenger = false, 
     ? { address: room.token_address, symbol: room.token_symbol }
     : token;
 
+  // Fetch market context for training data (non-blocking — battle still created if this fails)
+  const marketCtx = await fetchMarketContext(battleToken.symbol || 'SOL');
+
   // Create battle
+  const battleData = {
+    room_id: room.id,
+    bot1_id: room.host_bot_id,
+    bot2_id: bot.id,
+    bot1_prediction: hostPrediction,
+    bot2_prediction: prediction,
+    token_symbol: battleToken.symbol || 'SOL',
+    token_address: battleToken.address || '',
+    duration_minutes: room.duration_minutes || 1,
+    status: 'active',
+    resolves_at,
+  };
+  // Attach market data if available
+  if (marketCtx) {
+    if (marketCtx.market_price) battleData.market_price = marketCtx.market_price;
+    if (marketCtx.market_price_1h_ago) battleData.market_price_1h_ago = marketCtx.market_price_1h_ago;
+    if (marketCtx.market_price_24h_ago) battleData.market_price_24h_ago = marketCtx.market_price_24h_ago;
+    if (marketCtx.market_btc_price) battleData.market_btc_price = marketCtx.market_btc_price;
+    if (marketCtx.market_volume_ratio) battleData.market_volume_ratio = marketCtx.market_volume_ratio;
+  }
   const [battle] = await supabaseRequest('battles', {
     method: 'POST',
-    body: JSON.stringify({
-      room_id: room.id,
-      bot1_id: room.host_bot_id,
-      bot2_id: bot.id,
-      bot1_prediction: hostPrediction,
-      bot2_prediction: prediction,
-      token_symbol: battleToken.symbol || 'SOL',
-      token_address: battleToken.address || '',
-      duration_minutes: room.duration_minutes || 1,
-      status: 'active',
-      resolves_at,
-    }),
+    body: JSON.stringify(battleData),
   });
 
   // Update room status
@@ -884,23 +977,34 @@ async function matchmake() {
           // Determine if this is an NFA League match (both bots have NFA)
           const isNFAMatch = currentLeague === 'NFA League' && bot1.nfa_id != null && bot2.nfa_id != null;
 
-          // Create battle with league metadata
+          // Fetch market context for training data
+          const npcMarketCtx = await fetchMarketContext(fallbackToken.symbol);
+
+          // Create battle with league metadata + market context
+          const npcBattleData = {
+            room_id: room.id,
+            bot1_id: bot1.id,
+            bot2_id: bot2.id,
+            bot1_prediction: pred1,
+            bot2_prediction: pred2,
+            token_symbol: fallbackToken.symbol,
+            token_address: fallbackToken.address,
+            duration_minutes: duration,
+            status: 'active',
+            resolves_at,
+            league: isNFAMatch ? 'nfa' : 'free',
+            elo_multiplier: isNFAMatch ? NFA_ELO_MULTIPLIER : 1.0,
+          };
+          if (npcMarketCtx) {
+            if (npcMarketCtx.market_price) npcBattleData.market_price = npcMarketCtx.market_price;
+            if (npcMarketCtx.market_price_1h_ago) npcBattleData.market_price_1h_ago = npcMarketCtx.market_price_1h_ago;
+            if (npcMarketCtx.market_price_24h_ago) npcBattleData.market_price_24h_ago = npcMarketCtx.market_price_24h_ago;
+            if (npcMarketCtx.market_btc_price) npcBattleData.market_btc_price = npcMarketCtx.market_btc_price;
+            if (npcMarketCtx.market_volume_ratio) npcBattleData.market_volume_ratio = npcMarketCtx.market_volume_ratio;
+          }
           await supabaseRequest('battles', {
             method: 'POST',
-            body: JSON.stringify({
-              room_id: room.id,
-              bot1_id: bot1.id,
-              bot2_id: bot2.id,
-              bot1_prediction: pred1,
-              bot2_prediction: pred2,
-              token_symbol: fallbackToken.symbol,
-              token_address: fallbackToken.address,
-              duration_minutes: duration,
-              status: 'active',
-              resolves_at,
-              league: isNFAMatch ? 'nfa' : 'free',
-              elo_multiplier: isNFAMatch ? NFA_ELO_MULTIPLIER : 1.0,
-            }),
+            body: JSON.stringify(npcBattleData),
           });
 
           busyBotIds.add(bot1.id);
