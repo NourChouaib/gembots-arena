@@ -60,9 +60,29 @@ const getStrategyBadgeColor = (strategy: string): string => {
   }
 };
 
-const stripModelPrefix = (modelName: string): string => {
+const MODEL_DISPLAY_NAMES: Record<string, string> = {
+  'chaingpt/general-assistant': 'ChainGPT',
+  'openai/gpt-4.1-nano': 'GPT-4.1 Nano',
+  'openai/gpt-oss-120b': 'GPT-OSS 120B',
+  'openai/gpt-oss-20b': 'GPT-OSS 20B',
+  'google/gemini-2.0-flash-lite-001': 'Gemini Flash Lite',
+  'google/gemma-3-12b-it': 'Gemma 3 12B',
+  'mistralai/mistral-nemo': 'Mistral Nemo',
+  'mistralai/mistral-small-24b-instruct-2501': 'Mistral Small 24B',
+  'deepseek/deepseek-r1': 'DeepSeek R1',
+  'qwen/qwen3-235b-a22b-2507': 'Qwen3 235B',
+  'qwen/qwen3.5-coder-32b': 'Qwen3.5 Coder',
+  'meta-llama/llama-4-maverick': 'Llama 4 Maverick',
+  'x-ai/grok-4.1-fast': 'Grok 4.1 Fast',
+  'microsoft/phi-4': 'Phi-4',
+  'cohere/command-r-08-2024': 'Command R',
+};
+
+const formatModelName = (modelName: string): string => {
+  if (MODEL_DISPLAY_NAMES[modelName]) return MODEL_DISPLAY_NAMES[modelName];
   const parts = modelName.split('/');
-  return parts.length > 1 ? parts.slice(1).join('/') : modelName;
+  const name = parts.length > 1 ? parts.slice(1).join('/') : modelName;
+  return name.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 };
 
 // --- Components ---
@@ -181,7 +201,7 @@ const BenchmarkPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-8">
+    <div className="min-h-screen bg-gray-950 text-white p-4 md:p-8 pt-20 md:pt-8">
       <div className="max-w-7xl mx-auto">
         <h1 className="text-5xl font-extrabold text-center mb-12 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
           GemBots Arena Benchmark
@@ -210,28 +230,29 @@ const BenchmarkPage: React.FC = () => {
               <div className="h-4/5 w-11/12 bg-gray-800 rounded"></div>
             </div>
           ) : (
-            <div className="bg-gray-900 rounded-lg shadow-lg p-6 h-[500px]">
+            <div className="bg-gray-900 rounded-lg shadow-lg p-4 md:p-6 h-[450px] md:h-[500px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={modelPerformance} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <BarChart data={modelPerformance} margin={{ top: 20, right: 10, left: 0, bottom: 10 }}>
                   <XAxis
                     dataKey="model_name"
-                    tickFormatter={stripModelPrefix}
+                    tickFormatter={formatModelName}
                     angle={-45}
                     textAnchor="end"
-                    height={80}
-                    stroke="#a0aec0" // gray-400
-                    tick={{ fill: '#cbd5e0', fontSize: 12 }} // gray-300
+                    height={100}
+                    stroke="#a0aec0"
+                    tick={{ fill: '#cbd5e0', fontSize: 11 }}
+                    interval={0}
                   />
                   <YAxis
                     tickFormatter={(value) => `${Number(value).toFixed(0)}%`}
-                    stroke="#a0aec0" // gray-400
-                    tick={{ fill: '#cbd5e0', fontSize: 12 }} // gray-300
-                    domain={[0, 1]}
+                    stroke="#a0aec0"
+                    tick={{ fill: '#cbd5e0', fontSize: 12 }}
+                    domain={[0, 'auto']}
                   />
                   <Tooltip
                     cursor={{ fill: 'rgba(255,255,255,0.1)' }}
                     formatter={(value: number | undefined) => [`${(value || 0).toFixed(1)}%`, 'Win Rate']}
-                    labelFormatter={(label) => stripModelPrefix(label)}
+                    labelFormatter={(label) => formatModelName(label)}
                     contentStyle={{ backgroundColor: '#2d3748', border: 'none', borderRadius: '4px', color: '#fff' }} // gray-700
                     labelStyle={{ color: '#fff', fontWeight: 'bold' }}
                   />
