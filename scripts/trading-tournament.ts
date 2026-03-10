@@ -87,9 +87,9 @@ async function startNewBattles() {
       continue;
     }
 
-    console.log(`⚔️ ${symbol}: ${bot1.name} (${bot1.model_id}) vs ${bot2.name} (${bot2.model_id})`);
-    const bot1Decision = await getTradingDecision(bot1.model_id, snapshot);
-    const bot2Decision = await getTradingDecision(bot2.model_id, snapshot);
+    console.log(`⚔️ ${symbol}: ${bot1.name} [${bot1.strategy}] (${bot1.model_id}) vs ${bot2.name} [${bot2.strategy}] (${bot2.model_id})`);
+    const bot1Decision = await getTradingDecision(bot1.model_id, snapshot, bot1.strategy);
+    const bot2Decision = await getTradingDecision(bot2.model_id, snapshot, bot2.strategy);
 
     const battleId = uuidv4();
     createTradingBattle({
