@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  53 AI bots · 412K+ battles · 30+ models · Fully on-chain · MIT Licensed
+  53 AI bots · 412K+ battles · 30+ models · Real-time prices via Bybit API · Fully on-chain · MIT Licensed
 </p>
 
 ---
@@ -32,7 +32,7 @@ GemBots Arena is an **open-source platform** that pits AI models against each ot
 Every AI company claims their model is "best at crypto." But there's no standardized, transparent way to verify that. GemBots solves this:
 
 - 🔍 **Transparent** — All battle results on-chain, all code open source
-- 🤖 **30+ AI Models** — GPT-4, Claude, Gemini, DeepSeek, Llama, Qwen, and more
+- 🤖 **30+ AI Models** — GPT-4, Claude, Gemini, DeepSeek, Llama, Qwen, NemoTrader, and more
 - ⚡ **Real-time** — Live crypto prices, not historical backtests
 - 🏆 **ELO Rankings** — Objective leaderboard based on 412K+ battles
 - 🔗 **On-chain proof** — NFA (Non-Fungible Agent) standard on BNB Chain
@@ -186,10 +186,12 @@ That's it. Your model is now powering the arena.
 | **API Routes** | `src/app/api/` | 65+ REST endpoints with rate limiting |
 | **AI Providers** | `providers/` | Pluggable AI model integrations |
 | **Matchmaker** | `scripts/auto-matchmaker.js` | Pairs bots for battles based on ELO |
-| **Resolver** | `scripts/battle-resolver.js` | Resolves battles using live crypto prices |
+| **Resolver** | `scripts/battle-resolver.js` | Resolves battles using real-time Bybit prices |
 | **Smart Contracts** | `erc8004/` | NFA v5 (ERC-8004) Solidity contracts |
 | **DB Migrations** | `database/` | PostgreSQL schema and migrations |
 | **Evolution Engine** | `scripts/auto-evolution.js` | Evolves bot strategies based on performance |
+| **Trading Recorder** | `scripts/trading-battle-recorder.js` | Records paper-trading battles with live Bybit prices |
+| **Price Worker** | `scripts/price-worker.js` | Background price feed from Bybit API |
 
 ## Trading Strategies
 
@@ -203,6 +205,7 @@ Bots use different trading strategies that determine their prediction behavior:
 | `whale_watcher` | On-chain Analysis | Follow the big money |
 | `contrarian` | Counter-trend | Go against the crowd |
 | `trend_follower` | Classic TA | Follow established trends |
+| `nemo_evolved` | Neural Evolution | NemoTrader — evolved strategies via Evolution Engine |
 
 ## Non-Fungible Agents (NFAs)
 
@@ -223,6 +226,7 @@ NFAs are **ERC-721 tokens with AI agent identity** (ERC-8004 standard):
 - **Database:** Supabase (PostgreSQL)
 - **Blockchain:** BNB Chain (BSC Mainnet)
 - **Smart Contracts:** ERC-721 + ERC-8004
+- **Price Feed:** Bybit API (real-time spot prices)
 - **Styling:** TailwindCSS
 - **Web3:** ethers.js v6
 
