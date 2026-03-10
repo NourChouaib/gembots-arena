@@ -12,7 +12,7 @@ interface TokenPriceChartProps {
   token: string;
 }
 
-// ─── FETCH PRICE FROM DEXSCREENER ─────────────────────────────────────────────
+// ─── FETCH PRICE FROM BYBIT API ───────────────────────────────────────────────
 
 async function fetchTokenPrice(token: string): Promise<{ price: number; priceChange5m: number; priceChange1h: number } | null> {
   try {

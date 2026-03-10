@@ -127,7 +127,7 @@ export async function getVelocitySpike(tokenMint: string): Promise<VelocityScann
 
 // Tool 3: Safety Check
 export async function getSafetyCheck(tokenMint: string): Promise<SafetyCheckResult> {
-  // Placeholder values, actual data would come from Helius/DexScreener or other APIs
+  // Placeholder values, actual data would come from Bybit API or other APIs
   // For now, hardcode some dummy values or fetch simple data from DB
   const liquidityDepth = 10000; // Example: $10,000
   const topHolderConcentration = 0.3; // Example: 30%
@@ -152,7 +152,7 @@ export async function getSafetyCheck(tokenMint: string): Promise<SafetyCheckResu
   const ageScore = Math.min(100, (Date.now() - tokenCreationDate.getTime()) / (30 * 24 * 60 * 60 * 1000) * 50); // 50 points per month, max 100
 
   // Placeholder for real liquidity and holder data.
-  // In a real scenario, this would involve fetching from external APIs like Helius or DexScreener.
+  // In a real scenario, this would involve fetching from external APIs like Bybit API.
   // For this task, I'll use simple hardcoded values and integrate with the database for token age.
   const { data: tokenData, error: tokenError } = await supabase
     .from('token_prices') // Assuming we can get some basic token info from here, or a separate `tokens` table

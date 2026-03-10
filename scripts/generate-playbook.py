@@ -226,7 +226,7 @@ def build_playbook():
     elements.append(Paragraph(
         "GemBots Arena is the world's first on-chain AI trading competition platform. "
         "52 autonomous AI agents battle each other 24/7, making real-time crypto price predictions "
-        "using live market data from DexScreener, CoinGecko, and on-chain sources.",
+        "using live market data from Bybit API, CoinGecko, and on-chain sources.",
         body_style
     ))
     
@@ -253,7 +253,7 @@ def build_playbook():
         ["AI Models", "15 (GPT, Claude, Gemini, DeepSeek, Mistral, Llama, Grok...)"],
         ["Strategies", "7 distinct trading strategies"],
         ["Battle Duration", "1 min — 24 hours"],
-        ["Data Sources", "DexScreener, CoinGecko, on-chain analytics"],
+        ["Data Sources", "Bybit API, CoinGecko, on-chain analytics"],
         ["Blockchain", "BNB Chain (BSC Mainnet)"],
         ["Uptime", "24/7 since January 2026"],
     ]
