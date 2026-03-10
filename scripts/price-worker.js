@@ -16,43 +16,47 @@ try {
   // Column already exists
 }
 
-async function fetchTokenPrice(mint) {
-  // Try DexScreener with retry
-  for (let attempt = 0; attempt < 2; attempt++) {
+// Bybit symbol mappings
+const BYBIT_BY_ADDRESS = {
+  '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c': 'BNBUSDT',
+  '0x2170Ed0880ac9A755fd29B2688956BD959F933F8': 'ETHUSDT',
+  '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c': 'BTCUSDT',
+  '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82': 'CAKEUSDT',
+  '0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD': 'LINKUSDT',
+  '0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE': 'XRPUSDT',
+  '0x570A5D26f7765Ecb712C0924E4De545B89fD43dF': 'SOLUSDT',
+  '0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47': 'ADAUSDT',
+  'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm': 'WIFUSDT',
+  'So11111111111111111111111111111111111111112': 'SOLUSDT',
+};
+const BYBIT_BY_SYMBOL = {
+  'BTC': 'BTCUSDT', 'ETH': 'ETHUSDT', 'SOL': 'SOLUSDT',
+  'BNB': 'BNBUSDT', 'WIF': 'WIFUSDT', 'CAKE': 'CAKEUSDT',
+  'LINK': 'LINKUSDT', 'PEPE': 'PEPEUSDT', 'DOGE': 'DOGEUSDT',
+  'XRP': 'XRPUSDT', 'ADA': 'ADAUSDT', 'AVAX': 'AVAXUSDT',
+  'DOT': 'DOTUSDT',
+};
+
+async function fetchTokenPrice(mint, tokenSymbol) {
+  // 1) Try Bybit API first (fast, no Cloudflare issues)
+  const bybitSymbol = BYBIT_BY_ADDRESS[mint] || (tokenSymbol && BYBIT_BY_SYMBOL[tokenSymbol.toUpperCase()]);
+  if (bybitSymbol) {
     try {
-      const response = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mint}`, {
-        headers: { 'Accept': 'application/json', 'User-Agent': 'GemBots/1.0' }
-      });
-      const text = await response.text();
-      if (text.startsWith('<')) throw new Error('Got HTML (Cloudflare block)');
-      if (!response.ok) throw new Error(`DexScreener API error: ${response.status}`);
-      
-      const data = JSON.parse(text);
-      if (!data.pairs || data.pairs.length === 0) {
-        console.warn(`No pairs found for token: ${mint}`);
-        break; // no pairs = token issue, don't retry
+      const res = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${bybitSymbol}`);
+      const data = await res.json();
+      if (data?.result?.list?.[0]) {
+        const price = parseFloat(data.result.list[0].lastPrice);
+        if (!isNaN(price) && price > 0) {
+          console.log(`Price for ${mint}: $${price} (Bybit ${bybitSymbol})`);
+          return price;
+        }
       }
-      
-      const sortedPairs = data.pairs.sort((a, b) => 
-        parseFloat(b.liquidity?.usd || 0) - parseFloat(a.liquidity?.usd || 0)
-      );
-      const bestPair = sortedPairs[0];
-      const price = parseFloat(bestPair.priceUsd);
-      
-      if (isNaN(price) || price <= 0) {
-        console.warn(`Invalid price for token ${mint}: ${price}`);
-        return null;
-      }
-      
-      console.log(`Price for ${mint}: $${price} (DexScreener)`);
-      return price;
-    } catch (error) {
-      console.warn(`DexScreener attempt ${attempt + 1} for ${mint}:`, error.message);
-      if (attempt === 0) await new Promise(r => setTimeout(r, 2000));
+    } catch (e) {
+      console.warn(`Bybit failed for ${bybitSymbol}:`, e.message);
     }
   }
-  
-  // Fallback: Jupiter Price API
+
+  // 2) Fallback: Jupiter Price API
   try {
     const res = await fetch(`https://api.jup.ag/price/v2?ids=${mint}`);
     const data = await res.json();

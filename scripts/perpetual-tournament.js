@@ -361,56 +361,70 @@ const MIN_NFA_FOR_TOURNAMENT = 4;  // Min NFA bots to run NFA-only tournament
 const NFA_ELO_MULTIPLIER = 1.5;    // NFA League gives 1.5x ELO per win
 
 // ============================================
-// REAL PRICE FETCHING (DexScreener)
+// REAL PRICE FETCHING (Bybit API)
 // ============================================
 
 // Price cache to avoid redundant API calls within short windows
 const priceCache = new Map(); // key: mint → { price, timestamp }
 const PRICE_CACHE_TTL = 2000; // 2 sec cache
 
+// Bybit symbol mapping by contract address
+const BYBIT_BY_ADDRESS = {
+  '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c': 'BNBUSDT',
+  '0x2170Ed0880ac9A755fd29B2688956BD959F933F8': 'ETHUSDT',
+  '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c': 'BTCUSDT',
+  '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82': 'CAKEUSDT',
+  '0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD': 'LINKUSDT',
+  '0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE': 'XRPUSDT',
+  '0x570A5D26f7765Ecb712C0924E4De545B89fD43dF': 'SOLUSDT',
+  '0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47': 'ADAUSDT',
+  'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm': 'WIFUSDT',
+  'So11111111111111111111111111111111111111112': 'SOLUSDT',
+};
+const BYBIT_BY_SYMBOL = {
+  'BTC': 'BTCUSDT', 'ETH': 'ETHUSDT', 'SOL': 'SOLUSDT',
+  'BNB': 'BNBUSDT', 'WIF': 'WIFUSDT', 'CAKE': 'CAKEUSDT',
+  'LINK': 'LINKUSDT', 'PEPE': 'PEPEUSDT', 'DOGE': 'DOGEUSDT',
+  'XRP': 'XRPUSDT', 'ADA': 'ADAUSDT', 'AVAX': 'AVAXUSDT',
+  'DOT': 'DOTUSDT',
+};
+
 /**
- * Fetch real token price from DexScreener.
+ * Fetch real token price from Bybit API.
  * Returns price in USD or null if unavailable.
  */
-async function fetchTokenPrice(mintAddress) {
+async function fetchTokenPrice(mintAddress, tokenSymbol) {
   // Check cache first
   const cached = priceCache.get(mintAddress);
   if (cached && Date.now() - cached.timestamp < PRICE_CACHE_TTL) {
     return cached.price;
   }
 
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
-    
-    const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${mintAddress}`, {
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-
-    if (!res.ok) return null;
-    
-    const data = await res.json();
-    const pairs = data?.pairs;
-    if (!pairs || pairs.length === 0) return null;
-    
-    // Pick the pair with highest liquidity
-    const bestPair = pairs.reduce((best, p) => {
-      const liq = p?.liquidity?.usd || 0;
-      const bestLiq = best?.liquidity?.usd || 0;
-      return liq > bestLiq ? p : best;
-    }, pairs[0]);
-    
-    const price = parseFloat(bestPair.priceUsd);
-    if (isNaN(price) || price <= 0) return null;
-    
-    // Cache it
-    priceCache.set(mintAddress, { price, timestamp: Date.now() });
-    return price;
-  } catch (e) {
-    // Network error, timeout, etc — return null for fallback
-    return null;
+  // 1) Try Bybit API first
+  const bybitSymbol = BYBIT_BY_ADDRESS[mintAddress] || (tokenSymbol && BYBIT_BY_SYMBOL[tokenSymbol.toUpperCase()]);
+  if (bybitSymbol) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
+      const res = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${bybitSymbol}`, {
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      const data = await res.json();
+      if (data?.result?.list?.[0]) {
+        const price = parseFloat(data.result.list[0].lastPrice);
+        if (!isNaN(price) && price > 0) {
+          priceCache.set(mintAddress, { price, timestamp: Date.now() });
+          return price;
+        }
+      }
+    } catch (e) {
+      // Bybit failed
+    }
   }
+
+  // Bybit was our only source for this token
+  return null;
 }
 
 // ============================================

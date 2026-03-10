@@ -3,13 +3,21 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 export const revalidate = 300; // Cache for 5 minutes
 
-interface DexScreenerToken {
-  tokenAddress: string;
-  description?: string;
-  icon?: string;
-  totalAmount: number;
-  chainId: string;
-}
+// Core tokens for GemBots arena
+const CORE_TOKENS = [
+  { symbol: 'BTC', name: 'Bitcoin', bybit: 'BTCUSDT' },
+  { symbol: 'ETH', name: 'Ethereum', bybit: 'ETHUSDT' },
+  { symbol: 'SOL', name: 'Solana', bybit: 'SOLUSDT' },
+  { symbol: 'BNB', name: 'BNB', bybit: 'BNBUSDT' },
+  { symbol: 'WIF', name: 'dogwifhat', bybit: 'WIFUSDT' },
+  { symbol: 'DOGE', name: 'Dogecoin', bybit: 'DOGEUSDT' },
+  { symbol: 'PEPE', name: 'Pepe', bybit: 'PEPEUSDT' },
+  { symbol: 'XRP', name: 'XRP', bybit: 'XRPUSDT' },
+  { symbol: 'ADA', name: 'Cardano', bybit: 'ADAUSDT' },
+  { symbol: 'LINK', name: 'Chainlink', bybit: 'LINKUSDT' },
+  { symbol: 'AVAX', name: 'Avalanche', bybit: 'AVAXUSDT' },
+  { symbol: 'DOT', name: 'Polkadot', bybit: 'DOTUSDT' },
+];
 
 interface TrendingToken {
   mint: string;
@@ -19,79 +27,64 @@ interface TrendingToken {
   change24h: string;
   volume: string;
   boost: number;
-  icon?: string;
 }
 
 export async function GET() {
   try {
-    // Fetch top boosted tokens from DexScreener
-    const boostRes = await fetch('https://api.dexscreener.com/token-boosts/top/v1', {
-      next: { revalidate: 300 }
-    });
-    
-    if (!boostRes.ok) {
-      throw new Error('Failed to fetch from DexScreener');
+    // Fetch all tickers from Bybit in one call
+    const res = await fetch('https://api.bybit.com/v5/market/tickers?category=spot');
+    if (!res.ok) {
+      throw new Error(`Bybit API error: ${res.status}`);
     }
-    
-    const boostData: DexScreenerToken[] = await boostRes.json();
-    
-    // Filter Solana tokens only and take top 5
-    const solanaTokens = boostData
-      .filter(t => t.chainId === 'solana')
-      .slice(0, 5);
-    
-    // Fetch detailed price data for each token
-    const trendingTokens: TrendingToken[] = await Promise.all(
-      solanaTokens.map(async (token) => {
-        try {
-          const priceRes = await fetch(
-            `https://api.dexscreener.com/latest/dex/tokens/${token.tokenAddress}`
-          );
-          const priceData = await priceRes.json();
-          
-          const pair = priceData.pairs?.[0];
-          
-          return {
-            mint: token.tokenAddress,
-            symbol: pair?.baseToken?.symbol || 'UNKNOWN',
-            name: pair?.baseToken?.name || token.description || 'Unknown Token',
-            price: pair?.priceUsd ? `$${parseFloat(pair.priceUsd).toFixed(6)}` : 'N/A',
-            change24h: pair?.priceChange?.h24 
-              ? `${pair.priceChange.h24 > 0 ? '+' : ''}${pair.priceChange.h24.toFixed(1)}%` 
-              : 'N/A',
-            volume: pair?.volume?.h24 
-              ? `$${(pair.volume.h24 / 1000000).toFixed(2)}M` 
-              : 'N/A',
-            boost: token.totalAmount,
-            icon: token.icon ? `https://cdn.dexscreener.com/cms/images/${token.icon}?width=64&height=64` : undefined
-          };
-        } catch (e) {
-          return {
-            mint: token.tokenAddress,
-            symbol: 'UNKNOWN',
-            name: token.description || 'Unknown Token',
-            price: 'N/A',
-            change24h: 'N/A',
-            volume: 'N/A',
-            boost: token.totalAmount,
-            icon: token.icon ? `https://cdn.dexscreener.com/cms/images/${token.icon}?width=64&height=64` : undefined
-          };
-        }
-      })
-    );
-    
+    const data = await res.json();
+    const tickers = data?.result?.list || [];
+
+    // Build lookup map
+    const tickerMap: Record<string, any> = {};
+    for (const t of tickers) {
+      tickerMap[t.symbol] = t;
+    }
+
+    // Get prices + sort by 24h change to find top movers
+    const tokensWithData: TrendingToken[] = [];
+
+    for (const token of CORE_TOKENS) {
+      const t = tickerMap[token.bybit];
+      if (!t) continue;
+
+      const price = parseFloat(t.lastPrice) || 0;
+      const prevPrice = parseFloat(t.prevPrice24h) || price;
+      const change24h = prevPrice > 0 ? ((price - prevPrice) / prevPrice) * 100 : 0;
+      const volume24h = parseFloat(t.turnover24h) || 0; // USDT volume
+
+      tokensWithData.push({
+        mint: token.symbol, // Using symbol as identifier for major tokens
+        symbol: token.symbol,
+        name: token.name,
+        price: price > 1 ? `$${price.toFixed(2)}` : `$${price.toFixed(6)}`,
+        change24h: `${change24h > 0 ? '+' : ''}${change24h.toFixed(1)}%`,
+        volume: volume24h > 1_000_000
+          ? `$${(volume24h / 1_000_000).toFixed(2)}M`
+          : `$${(volume24h / 1_000).toFixed(0)}K`,
+        boost: Math.abs(change24h), // Use absolute change as "boost" score
+      });
+    }
+
+    // Sort by absolute 24h change (most volatile = most interesting)
+    tokensWithData.sort((a, b) => b.boost - a.boost);
+
+    // Return top 5
     return NextResponse.json({
       success: true,
-      tokens: trendingTokens,
-      fetchedAt: new Date().toISOString()
+      tokens: tokensWithData.slice(0, 5),
+      fetchedAt: new Date().toISOString(),
     });
-    
   } catch (error: any) {
     console.error('Trending API error:', error);
     return NextResponse.json({
       success: false,
       error: 'Failed to fetch trending tokens',
-      tokens: []
+      tokens: [],
     }, { status: 500 });
   }
 }

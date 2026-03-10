@@ -15,7 +15,7 @@
  */
 
 const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gembots-trader';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gembots-nemo-12b';
 
 async function ollamaGenerate(prompt, options = {}) {
   const response = await fetch(`${OLLAMA_HOST}/api/generate`, {
@@ -122,6 +122,6 @@ module.exports = {
   healthCheck,
   // Metadata
   name: 'ollama-local',
-  displayName: 'GemBots Trader (Fine-tuned Gemma 12B)',
-  description: 'Fine-tuned on 400K+ arena battles. Runs locally via Ollama.',
+  displayName: 'GemBots Trader (Fine-tuned Mistral Nemo 12B)',
+  description: 'Mistral Nemo 12B fine-tuned on 29K crypto trading examples (BTC/ETH/SOL). Runs locally via Ollama.',
 };

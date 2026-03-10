@@ -15,7 +15,7 @@ if (fs.existsSync(envPath)) {
  * 
  * Runs every 10 seconds:
  * 1. Finds battles with status='active' where resolves_at has passed
- * 2. Fetches real token price from DexScreener
+ * 2. Fetches real token price from Bybit API
  * 3. Calculates actual_x multiplier
  * 4. Determines winner (closest prediction)
  * 5. Updates HP, wins/losses, ELO rating, league
@@ -233,33 +233,50 @@ async function supabaseRequest(endpoint, options = {}) {
   return text ? JSON.parse(text) : null;
 }
 
-async function fetchTokenPrice(address) {
-  // Try DexScreener with retry
-  for (let attempt = 0; attempt < 2; attempt++) {
+// Bybit symbol mappings for price fetching
+const BYBIT_BY_ADDRESS = {
+  'So11111111111111111111111111111111111111112': 'SOLUSDT',
+  '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c': 'BNBUSDT', // BSC BNB
+  '0x2170Ed0880ac9A755fd29B2688956BD959F933F8': 'ETHUSDT', // BSC ETH
+  '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c': 'BTCUSDT', // BSC BTC
+  '0x0D8Ce2A99Bb6e3B7Db580eD848240e4a0F9aE153': 'WIFUSDT', // BSC WIF
+  '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82': 'CAKEUSDT',
+  '0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD': 'LINKUSDT',
+  'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm': 'WIFUSDT', // Solana WIF
+};
+const BYBIT_BY_SYMBOL = {
+  'BTC': 'BTCUSDT', 'ETH': 'ETHUSDT', 'SOL': 'SOLUSDT',
+  'BNB': 'BNBUSDT', 'WIF': 'WIFUSDT', 'CAKE': 'CAKEUSDT',
+  'LINK': 'LINKUSDT', 'PEPE': 'PEPEUSDT', 'ADA': 'ADAUSDT',
+  'XRP': 'XRPUSDT', 'DOGE': 'DOGEUSDT', 'AVAX': 'AVAXUSDT',
+  'DOT': 'DOTUSDT', 'SHIB': 'SHIBUSDT', 'MATIC': 'MATICUSDT',
+  'MEW': 'MEWUSDT', 'POPCAT': 'POPCATUSDT', 'JTO': 'JTOUSDT',
+};
+
+async function fetchTokenPrice(address, tokenSymbol) {
+  // 1) Try Bybit API first (fast, no Cloudflare issues)
+  const bybitSymbol = BYBIT_BY_ADDRESS[address] || (tokenSymbol && BYBIT_BY_SYMBOL[tokenSymbol.toUpperCase()]);
+  if (bybitSymbol) {
     try {
-      const res = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${address}`, {
-        headers: { 'Accept': 'application/json', 'User-Agent': 'GemBots/1.0' }
-      });
-      const text = await res.text();
-      if (text.startsWith('<')) throw new Error('Got HTML instead of JSON (Cloudflare block)');
-      const data = JSON.parse(text);
-      
-      if (data.pairs && data.pairs.length > 0) {
-        const pair = data.pairs.sort((a, b) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0))[0];
-        return {
-          price: parseFloat(pair.priceUsd) || 0,
-          priceChange5m: parseFloat(pair.priceChange?.m5) || 0,
-          priceChange1h: parseFloat(pair.priceChange?.h1) || 0,
-          source: 'dexscreener',
-        };
+      const res = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${bybitSymbol}`);
+      const data = await res.json();
+      if (data?.result?.list?.[0]) {
+        const t = data.result.list[0];
+        const price = parseFloat(t.lastPrice);
+        const prevPrice24h = t.prevPrice24h ? parseFloat(t.prevPrice24h) : null;
+        const priceChange1h = 0; // Bybit ticker doesn't provide 1h change
+        const priceChange5m = 0;
+        if (price > 0) {
+          console.log(`   Bybit price for ${tokenSymbol || address}: $${price} (${bybitSymbol})`);
+          return { price, priceChange5m, priceChange1h, source: 'bybit' };
+        }
       }
     } catch (e) {
-      console.warn(`DexScreener attempt ${attempt + 1} failed:`, e.message);
-      if (attempt === 0) await new Promise(r => setTimeout(r, 2000)); // wait 2s before retry
+      console.warn(`Bybit price fetch failed for ${bybitSymbol}:`, e.message);
     }
   }
 
-  // Fallback: Jupiter Price API v2
+  // 2) Fallback: Jupiter Price API v2
   try {
     const res = await fetch(`https://api.jup.ag/price/v2?ids=${address}`);
     const data = await res.json();
@@ -297,10 +314,17 @@ async function resolveBattle(battle, bot1, bot2) {
   console.log(`   ${bot1.name} (ELO:${bot1.elo || 1000}): ${battle.bot1_prediction}x | ${bot2.name} (ELO:${bot2.elo || 1000}): ${battle.bot2_prediction}x`);
   
   // Fetch current price data
-  const priceData = await fetchTokenPrice(battle.token_address);
-  const actual_x = Math.max(0.1, 1 + (priceData.priceChange5m / 100));
-  
-  console.log(`   Actual result: ${actual_x.toFixed(4)}x`);
+  const priceData = await fetchTokenPrice(battle.token_address, battle.token_symbol);
+  let actual_x;
+  if (battle.entry_price && battle.entry_price > 0 && priceData.price && priceData.price > 0) {
+    actual_x = priceData.price / battle.entry_price;
+    console.log(`   Entry: $${battle.entry_price} → Current: $${priceData.price} = ${actual_x.toFixed(4)}x`);
+  } else {
+    // Fallback to priceChange if no entry_price
+    actual_x = Math.max(0.1, 1 + (priceData.priceChange5m / 100));
+    console.log(`   ⚠️ No entry_price, using change: ${actual_x.toFixed(4)}x`);
+  }
+  actual_x = Math.max(0.1, actual_x); // safety floor
   
   // Determine winner (closest to actual)
   const diff1 = Math.abs(battle.bot1_prediction - actual_x);

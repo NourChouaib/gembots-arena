@@ -22,19 +22,7 @@ const COINGECKO_IDS: Record<string, string> = {
   CAKE: 'pancakeswap-token',
 };
 
-// BSC token contract addresses for reliable DexScreener lookup (avoid text search ambiguity)
-const BSC_ADDRESSES: Record<string, string> = {
-  BNB: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
-  BTC: '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c',
-  ETH: '0x2170Ed0880ac9A755fd29B2688956BD959F933F8',
-  SOL: '0x570A5D26f7765Ecb712C0924E4De545B89fD43dF',
-  CAKE: '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82',
-  XRP: '0x1D2F0da169ceB9fC7B3144628dB156f3F6c60dBE',
-  LINK: '0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD',
-  ADA: '0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47',
-};
-
-// Cache prices for 10 seconds to avoid CoinGecko rate limits
+// Cache prices for 10 seconds
 let priceCache: Record<string, { price: number; priceChange5m: number; priceChange1h: number; ts: number }> = {};
 const CACHE_TTL = 10_000;
 
@@ -75,40 +63,45 @@ export async function GET(request: Request) {
         }
       }
     } catch {
-      // Fall through to DexScreener
+      // Fall through to Bybit
     }
   }
 
-  // Fallback: DexScreener — prefer contract address lookup (more reliable than text search)
+  // Fallback: Bybit API (fast, no Cloudflare issues)
+  const BYBIT_SYMBOLS: Record<string, string> = {
+    BTC: 'BTCUSDT', ETH: 'ETHUSDT', SOL: 'SOLUSDT', BNB: 'BNBUSDT',
+    WIF: 'WIFUSDT', CAKE: 'CAKEUSDT', LINK: 'LINKUSDT', PEPE: 'PEPEUSDT',
+    DOGE: 'DOGEUSDT', XRP: 'XRPUSDT', ADA: 'ADAUSDT', AVAX: 'AVAXUSDT',
+    DOT: 'DOTUSDT', SHIB: 'SHIBUSDT', MATIC: 'MATICUSDT',
+    UNI: 'UNIUSDT', AAVE: 'AAVEUSDT', NEAR: 'NEARUSDT',
+    APT: 'APTUSDT', SUI: 'SUIUSDT', ARB: 'ARBUSDT', OP: 'OPUSDT',
+  };
+
+  const bybitSymbol = BYBIT_SYMBOLS[token] || `${token}USDT`;
   try {
-    const bscAddress = BSC_ADDRESSES[token];
-    const dexUrl = bscAddress
-      ? `https://api.dexscreener.com/latest/dex/tokens/${bscAddress}`
-      : `https://api.dexscreener.com/latest/dex/search?q=${token}`;
-    
-    const res = await fetch(dexUrl);
-    if (!res.ok) {
-      return NextResponse.json({ error: 'Price fetch failed' }, { status: 502 });
+    const res = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${bybitSymbol}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.result?.list?.[0]) {
+        const t = data.result.list[0];
+        const price = parseFloat(t.lastPrice);
+        if (price > 0) {
+          const prevPrice = parseFloat(t.prevPrice24h) || price;
+          const change24h = prevPrice > 0 ? ((price - prevPrice) / prevPrice) * 100 : 0;
+          const result = {
+            price,
+            priceChange5m: 0,
+            priceChange1h: parseFloat((change24h / 24).toFixed(2)),
+            ts: Date.now(),
+          };
+          priceCache[token] = result;
+          return NextResponse.json(result);
+        }
+      }
     }
-    const data = await res.json();
-    const pairs = data.pairs || [];
-    if (pairs.length === 0) {
-      return NextResponse.json({ error: 'No pairs found' }, { status: 404 });
-    }
-
-    // Sort by liquidity to get the real pair
-    const sorted = pairs.sort((a: any, b: any) => (b.liquidity?.usd || 0) - (a.liquidity?.usd || 0));
-    const best = sorted[0];
-
-    const result = {
-      price: parseFloat(best.priceUsd) || 0,
-      priceChange5m: best.priceChange?.m5 ?? 0,
-      priceChange1h: best.priceChange?.h1 ?? 0,
-      ts: Date.now(),
-    };
-    priceCache[token] = result;
-    return NextResponse.json(result);
   } catch {
-    return NextResponse.json({ error: 'Price fetch failed' }, { status: 502 });
+    // Bybit also failed
   }
+
+  return NextResponse.json({ error: 'Price fetch failed for ' + token }, { status: 502 });
 }

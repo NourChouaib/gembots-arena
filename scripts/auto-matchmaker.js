@@ -342,6 +342,69 @@ Predict the price multiplier (0.1 to 100.0). 1.0 = no change, 2.0 = doubles, 0.5
 Respond ONLY with valid JSON: {"prediction": <number>, "reasoning": "<brief>", "confidence": <0-100>}`;
 }
 
+// ---- Ollama Local LLM Prediction ----
+const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
+const OLLAMA_TIMEOUT_MS = 180000; // 180s — local models need time for cold start + inference
+
+async function getOllamaPrediction(botName, ollamaModel, token, durationMinutes) {
+  const startTime = Date.now();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${OLLAMA_HOST}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: ollamaModel,
+        messages: [
+          { role: 'system', content: 'You are a crypto market prediction bot. Always respond with valid JSON only. No markdown formatting.' },
+          { role: 'user', content: buildLLMPrompt(botName, token, durationMinutes) },
+        ],
+        stream: false,
+        keep_alive: '30m',
+        options: { temperature: 0.7, num_predict: 300 },
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+    const latencyMs = Date.now() - startTime;
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Ollama API error ${response.status}: ${errText}`);
+    }
+
+    const data = await response.json();
+    let content = (data.message?.content || '').trim();
+    if (content.startsWith('```')) {
+      content = content.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+    }
+    const jsonMatch = content.match(/\{[\s\S]*?\}/);
+    let prediction, confidence;
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      prediction = clamp(Number(parsed.prediction) || 1.0, 0.1, 100.0);
+      confidence = Math.max(0, Math.min(100, Number(parsed.confidence) || 50));
+    } else {
+      // Fallback: parse fine-tuned model text format "Prediction: 0.9963x" or "1.0123x"
+      const predMatch = content.match(/(\d+\.\d+)x/);
+      if (!predMatch) throw new Error(`No JSON in Ollama response: ${content.slice(0, 100)}`);
+      prediction = clamp(Number(predMatch[1]), 0.1, 100.0);
+      // Derive confidence from keywords
+      const confMatch = content.match(/[Cc]onfidence:\s*(high|medium|low|\d+)/i);
+      confidence = confMatch ? (confMatch[1] === 'high' ? 80 : confMatch[1] === 'medium' ? 50 : confMatch[1] === 'low' ? 30 : Number(confMatch[1]) || 50) : 50;
+    }
+
+    console.log(`  🏠 Ollama [${botName}] ${ollamaModel} → ${prediction}x (conf: ${confidence}%, ${latencyMs}ms)`);
+    return prediction;
+  } catch (e) {
+    clearTimeout(timeout);
+    throw new Error(`Ollama prediction failed: ${e.message}`);
+  }
+}
+
 async function getOpenRouterPrediction(botName, modelId, token, durationMinutes) {
   if (!OPENROUTER_API_KEY) {
     throw new Error('OPENROUTER_API_KEY not set');
@@ -522,6 +585,15 @@ async function getPredictionWithLLMFallback(bot, strategy, token, customParams, 
   if (!bot.model_id || !OPENROUTER_API_KEY) {
     // No model_id or no API key — use formula strategy directly
     basePrediction = generatePrediction(strategy, token, customParams);
+  } else if (bot.model_id.startsWith('ollama/')) {
+    // Ollama local model — route to local Ollama instance
+    const ollamaModel = bot.model_id.replace('ollama/', '');
+    try {
+      basePrediction = await getOllamaPrediction(bot.name, ollamaModel, token, durationMinutes || 1);
+    } catch (error) {
+      console.log(`  ⚠️ Ollama failed for ${bot.name}: ${error.message}, falling back to formula`);
+      basePrediction = generatePrediction(strategy, token, customParams);
+    }
   } else {
     // Fallback model chain: try bot's model → free fallbacks → formula
     const FALLBACK_MODELS = [
@@ -628,7 +700,7 @@ async function supabaseRequest(path, options = {}) {
 async function getActiveBots() {
   // Only NPC bots — never auto-match human/guest bots
   // Include model_id for OpenRouter LLM predictions + nfa_id for league system + webhook_url for user AI
-  return supabaseRequest('bots?hp=gt.0&is_npc=eq.true&select=*,model_id,nfa_id,evm_address,webhook_url&limit=30');
+  return supabaseRequest('bots?hp=gt.0&is_npc=eq.true&select=*,model_id,nfa_id,evm_address,webhook_url&limit=60');
 }
 
 async function getUserBots() {
@@ -720,11 +792,20 @@ async function joinRoom(bot, room, strategy, token, preserveChallenger = false, 
   // Fetch market context for training data (non-blocking — battle still created if this fails)
   const marketCtx = await fetchMarketContext(battleToken.symbol || 'SOL');
 
+  // Fetch host bot name
+  let hostBotName = '';
+  try {
+    const hostBots = await supabaseRequest(`bots?id=eq.${room.host_bot_id}&select=name`);
+    if (hostBots && hostBots[0]) hostBotName = hostBots[0].name || '';
+  } catch {}
+
   // Create battle
   const battleData = {
     room_id: room.id,
     bot1_id: room.host_bot_id,
     bot2_id: bot.id,
+    bot1_name: hostBotName,
+    bot2_name: bot.name || '',
     bot1_prediction: hostPrediction,
     bot2_prediction: prediction,
     token_symbol: battleToken.symbol || 'SOL',
@@ -740,7 +821,20 @@ async function joinRoom(bot, room, strategy, token, preserveChallenger = false, 
     if (marketCtx.market_price_24h_ago) battleData.market_price_24h_ago = marketCtx.market_price_24h_ago;
     if (marketCtx.market_btc_price) battleData.market_btc_price = marketCtx.market_btc_price;
     if (marketCtx.market_volume_ratio) battleData.market_volume_ratio = marketCtx.market_volume_ratio;
+    if (marketCtx.market_price) battleData.entry_price = marketCtx.market_price;
   }
+  // Bybit fallback for entry_price
+  if (!battleData.entry_price && battleData.token_symbol) {
+    try {
+      const BYBIT_MAP = {BTC:'BTCUSDT',ETH:'ETHUSDT',SOL:'SOLUSDT',BNB:'BNBUSDT',WIF:'WIFUSDT'};
+      const sym = BYBIT_MAP[battleData.token_symbol];
+      if (sym) {
+        const r = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${sym}`).then(r=>r.json());
+        if (r?.result?.list?.[0]?.lastPrice) battleData.entry_price = parseFloat(r.result.list[0].lastPrice);
+      }
+    } catch(e) {}
+  }
+  console.log(`  💰 Battle data entry_price: ${battleData.entry_price}, market_price: ${battleData.market_price}`);
   const [battle] = await supabaseRequest('battles', {
     method: 'POST',
     body: JSON.stringify(battleData),
@@ -839,6 +933,7 @@ async function sendBattleWebhooks(battle, challengerBot, room, token) {
 }
 
 async function matchmake() {
+  console.log('\n🔄 Matchmake cycle starting...');
   try {
     const [allBots, userBotLinks, waitingRooms, activeBattles] = await Promise.all([
       getActiveBots(),
@@ -889,7 +984,11 @@ async function matchmake() {
     // Auto-start pre-matched rooms (tournaments, direct challenges)
     for (const room of preMatchedRooms) {
       const challengerBot = (allBots || []).find(b => b.id === room.challenger_bot_id);
-      if (!challengerBot) continue;
+      if (!challengerBot) {
+        if (room.challenger_bot_id === 56) console.log('  ❗ NemoTrader NOT found in allBots!');
+        continue;
+      }
+      if (challengerBot.id === 56) console.log('  🧠 Processing NemoTrader room:', room.id, room.token_symbol);
       
       const strategy = botStrategyMap[challengerBot.id] || 'smart_ai';
       const token = (room.token_address && room.token_symbol)
@@ -985,6 +1084,8 @@ async function matchmake() {
             room_id: room.id,
             bot1_id: bot1.id,
             bot2_id: bot2.id,
+            bot1_name: bot1.name || '',
+            bot2_name: bot2.name || '',
             bot1_prediction: pred1,
             bot2_prediction: pred2,
             token_symbol: fallbackToken.symbol,
@@ -1001,6 +1102,18 @@ async function matchmake() {
             if (npcMarketCtx.market_price_24h_ago) npcBattleData.market_price_24h_ago = npcMarketCtx.market_price_24h_ago;
             if (npcMarketCtx.market_btc_price) npcBattleData.market_btc_price = npcMarketCtx.market_btc_price;
             if (npcMarketCtx.market_volume_ratio) npcBattleData.market_volume_ratio = npcMarketCtx.market_volume_ratio;
+            if (npcMarketCtx.market_price) npcBattleData.entry_price = npcMarketCtx.market_price;
+          }
+          // Bybit fallback for entry_price
+          if (!npcBattleData.entry_price && npcBattleData.token_symbol) {
+            try {
+              const BYBIT_MAP = {BTC:'BTCUSDT',ETH:'ETHUSDT',SOL:'SOLUSDT',BNB:'BNBUSDT',WIF:'WIFUSDT'};
+              const sym = BYBIT_MAP[npcBattleData.token_symbol];
+              if (sym) {
+                const r = await fetch(`https://api.bybit.com/v5/market/tickers?category=spot&symbol=${sym}`).then(r=>r.json());
+                if (r?.result?.list?.[0]?.lastPrice) npcBattleData.entry_price = parseFloat(r.result.list[0].lastPrice);
+              }
+            } catch(e) {}
           }
           await supabaseRequest('battles', {
             method: 'POST',
@@ -1043,7 +1156,9 @@ console.log(`   Default interval: ${DEFAULT_CHECK_INTERVAL / 1000}s | Launch int
 _lastLaunchModeState = initialConfig.enabled;
 
 async function mainLoop() {
+  try {
   await matchmake();
+  } catch(e) { console.error('❌ MATCHMAKE CRASH:', e.message, e.stack?.split('\n')[1]); }
 
   // Re-read launch mode config for next interval
   const config = getLaunchModeConfig();
