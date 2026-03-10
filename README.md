@@ -103,7 +103,7 @@ node scripts/battle-resolver.js
 │             AI Provider System                    │
 │                                                   │
 │  ┌──────────┐ ┌──────────┐ ┌──────────────────┐ │
-│  │ Example  │ │ ChainGPT │ │ Your Provider    │ │
+│  │ Example  │ │ Custom   │ │ Your Provider    │ │
 │  │ (mock)   │ │          │ │ (implement me!)  │ │
 │  └──────────┘ └──────────┘ └──────────────────┘ │
 └───────────────────┬─────────────────────────────┘

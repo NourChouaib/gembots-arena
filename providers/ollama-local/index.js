@@ -7,14 +7,14 @@
  * Setup:
  *   1. Install Ollama on Alpha-Machine
  *   2. Load model: ollama create gembots-trader -f Modelfile
- *   3. Set OLLAMA_HOST in .env.local (default: http://100.109.208.116:11434)
+ *   3. Set OLLAMA_HOST in .env.local (default: http://localhost:11434)
  * 
  * Environment:
  *   OLLAMA_HOST - Ollama API URL (default: http://localhost:11434)
  *   OLLAMA_MODEL - Model name (default: gembots-trader)
  */
 
-const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://100.109.208.116:11434';
+const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://localhost:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'gembots-trader';
 
 async function ollamaGenerate(prompt, options = {}) {

@@ -8,7 +8,6 @@ GemBots Arena uses a pluggable AI provider system. Each provider implements the 
 |----------|-------------|------------------|
 | `example` | Mock provider for development (default) | No |
 | `openrouter` | Access 200+ AI models (GPT-4, Claude, Gemini, etc.) | Yes (`OPENROUTER_API_KEY`) |
-| `chaingpt` | ChainGPT — crypto-specialized AI | Yes |
 | `template` | Copy this to create your own! | — |
 
 ## Quick Start

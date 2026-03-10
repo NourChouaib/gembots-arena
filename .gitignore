@@ -122,3 +122,10 @@ proxy.ts
 
 # Solana
 *.json.bak
+
+# Training / fine-tuning (moved to crypto-open-router)
+scripts/finetune-*.py
+scripts/generate-training-dataset.py
+scripts/fetch-bybit-candles.js
+CRYPTO-OPEN-ROUTER.md
+providers/chaingpt/

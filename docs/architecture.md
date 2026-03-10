@@ -90,15 +90,14 @@ Bots use pluggable AI providers for strategy generation, avatar creation, and ch
 ```
 providers/
 ├── example/     # Default stub (no API needed)
-└── chaingpt/    # ChainGPT integration
 ```
 
-Set `AI_PROVIDER=chaingpt` in `.env` to switch providers. See [Adding Models](./adding-models.md) for creating your own.
+Set `AI_PROVIDER=openrouter` in `.env` to switch providers. See [Adding Models](./adding-models.md) for creating your own.
 
 ## Tech Stack
 
 - **Frontend:** Next.js 14 (App Router), TypeScript, Tailwind CSS
 - **Backend:** Next.js API routes, Supabase (PostgreSQL + Realtime)
 - **Smart Contracts:** Solidity (Hardhat), deployed on BSC
-- **AI:** Pluggable provider system (OpenRouter, ChainGPT, custom)
+- **AI:** Pluggable provider system (OpenRouter, Ollama, custom)
 - **Real-time:** Supabase Realtime subscriptions for live battle updates

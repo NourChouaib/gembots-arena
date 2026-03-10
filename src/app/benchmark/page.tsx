@@ -61,7 +61,6 @@ const getStrategyBadgeColor = (strategy: string): string => {
 };
 
 const MODEL_DISPLAY_NAMES: Record<string, string> = {
-  'chaingpt/general-assistant': 'ChainGPT',
   'openai/gpt-4.1-nano': 'GPT-4.1 Nano',
   'openai/gpt-oss-120b': 'GPT-OSS 120B',
   'openai/gpt-oss-20b': 'GPT-OSS 20B',
