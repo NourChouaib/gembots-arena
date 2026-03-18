@@ -21,7 +21,7 @@ class MistralProvider {
   constructor() {
     this.name = 'Mistral';
     this.apiKey = process.env.MISTRAL_API_KEY;
-    this.model = process.env.MISTRAL_MODEL || 'mistral-large-2512';
+    this.model = process.env.MISTRAL_MODEL || 'mistral-large-latest';
 
     if (!this.apiKey) {
       console.warn('[Mistral] MISTRAL_API_KEY not set — requests will fail');
